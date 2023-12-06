@@ -1,7 +1,7 @@
 //! Access to the different monitors.
 use anyhow::*;
 use log::*;
-use sysinfo::{System, SystemExt};
+use sysinfo::{RefreshKind, System, SystemExt};
 
 use self::system::init_system;
 
@@ -19,7 +19,8 @@ impl SystemState {
 
     pub fn refresh(&mut self) -> Result<()> {
         debug!("refreshing system");
-        self.system.refresh_all();
+        let specs = RefreshKind::everything();
+        self.system.refresh_specifics(specs);
         Ok(())
     }
 }
