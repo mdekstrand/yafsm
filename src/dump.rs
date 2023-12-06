@@ -3,77 +3,77 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use anyhow::Result;
-use clap::Args;
+use clap::{Args, ValueEnum};
+use friendly::{bytes, scalar, Quantity};
 use log::*;
 use sysinfo::{CpuExt, SystemExt};
 
 use crate::monitors::SystemState;
+
+#[derive(ValueEnum, Clone, Debug)]
+enum DumpType {
+    Cpu,
+    Mem,
+}
 
 #[derive(Args, Debug)]
 pub struct DumpOpts {
     /// Period of time (in ms) to wait to refresh for system usage information.
     #[arg(long = "dump-wait", default_value = "500")]
     dump_wait: u64,
-    /// Dump CPU and usage information.
-    #[arg(long = "dump-cpu")]
-    dump_cpu: bool,
-}
-
-struct DumpState<'a> {
-    opts: &'a DumpOpts,
-    state: &'a mut SystemState,
-    slept: bool,
-    dumped: bool,
+    /// Dump a system status.
+    #[arg(short = 'D', long = "dump")]
+    dumps: Vec<DumpType>,
 }
 
 impl DumpOpts {
-    pub fn active(&self) -> bool {
-        self.dump_cpu
+    pub fn requested(&self) -> bool {
+        !self.dumps.is_empty()
     }
 
-    pub fn dump(&self, state: &mut SystemState) -> Result<bool> {
-        let mut ds = DumpState {
-            opts: self,
-            state,
-            slept: false,
-            dumped: false,
-        };
-        ds.dump()
-    }
-}
+    pub fn dump(&self, state: &mut SystemState) -> Result<()> {
+        let wait = Duration::from_millis(self.dump_wait);
+        debug!("waiting {} to refresh", friendly::duration(wait));
+        sleep(wait);
+        state.refresh()?;
 
-impl<'a> DumpState<'a> {
-    fn dump(&mut self) -> Result<bool> {
-        if self.opts.dump_cpu {
-            self.dump_cpu()?;
-            self.dumped = true;
+        for dump in &self.dumps {
+            match dump {
+                DumpType::Cpu => self.dump_cpu(&state)?,
+                DumpType::Mem => self.dump_memory(&state)?,
+            }
         }
-        Ok(self.dumped)
-    }
 
-    fn ensure_update(&mut self) -> Result<()> {
-        if !self.slept {
-            let wait = Duration::from_millis(self.opts.dump_wait);
-            debug!("waiting {} to refresh", friendly::duration(wait));
-            sleep(wait);
-            self.state.refresh()?;
-            self.slept = true;
-        }
         Ok(())
     }
 
-    fn dump_cpu(&mut self) -> Result<()> {
-        self.ensure_update()?;
-
-        let cpus = self.state.system.cpus();
+    fn dump_cpu(&self, state: &SystemState) -> Result<()> {
+        let cpus = state.system.cpus();
         for cpu in cpus {
             println!(
-                "CPU {}: {:5.1}% @ {} hz",
+                "CPU {}: {:5.1}% @ {}",
                 cpu.name(),
                 cpu.cpu_usage(),
-                cpu.frequency()
+                scalar(cpu.frequency() * 1000_000).suffix("Hz")
             );
         }
+
+        Ok(())
+    }
+
+    fn dump_memory(&self, state: &SystemState) -> Result<()> {
+        let sys = &state.system;
+
+        println!(
+            "MEM: {} / {} used",
+            bytes(sys.used_memory()),
+            bytes(sys.total_memory())
+        );
+        println!(
+            "SWP: {} / {} used",
+            bytes(sys.used_swap()),
+            bytes(sys.total_swap())
+        );
 
         Ok(())
     }

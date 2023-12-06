@@ -20,7 +20,8 @@ fn main() -> Result<()> {
 
     let mut state = SystemState::init()?;
 
-    if cli.dump.dump(&mut state)? {
+    if cli.dump.requested() {
+        cli.dump.dump(&mut state)?;
         return Ok(());
     }
 

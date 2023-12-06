@@ -10,7 +10,10 @@ description = "System usage monitor inspired by glances."
 anyhow = "~1.0"
 log = "~0.4"
 fern = "~0.6"
-friendly = "~0.1"
 clap = { version = "~4.4", features = ["derive"] }
 ratatui = "~0.24"
+
+friendly = "~0.1"
+parse-display = "~0.8"
+
 sysinfo = { version = "~0.29", default-features = false }
