@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use anyhow::Result;
 use clap::{Args, ValueEnum};
-use friendly::{bytes, scalar, Quantity};
+use friendly::{bytes, scalar};
 use log::*;
 use sysinfo::{CpuExt, SystemExt};
 
@@ -22,7 +22,7 @@ pub struct DumpOpts {
     #[arg(long = "dump-wait", default_value = "500")]
     dump_wait: u64,
     /// Dump a system status.
-    #[arg(short = 'D', long = "dump")]
+    #[arg(short = 'D', long = "dump", id = "ASPECT")]
     dumps: Vec<DumpType>,
 }
 
