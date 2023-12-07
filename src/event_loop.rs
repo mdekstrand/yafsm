@@ -27,7 +27,7 @@ where
                         _ => (),
                     }
                 }
-                _ => (),
+                _ => (), // covers resize too, no action needed
             }
         } else {
             last_refresh = now;

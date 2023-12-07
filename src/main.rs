@@ -28,7 +28,7 @@ struct CLIOptions {
     debug: bool,
 
     /// Refresh period (in seconds).
-    #[arg(short = 'r', long = "refresh", default_value = "1.0")]
+    #[arg(short = 'r', long = "refresh", default_value = "3.0")]
     refresh: f32,
 
     #[command(flatten)]
