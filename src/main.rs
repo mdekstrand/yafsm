@@ -14,7 +14,6 @@ use dump::DumpOpts;
 use event_loop::run_event_loop;
 use monitors::SystemState;
 use term::with_terminal;
-use view::render_screen;
 
 /// System process monitor.
 #[derive(Parser, Debug)]

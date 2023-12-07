@@ -1,11 +1,9 @@
 //! Quick-look bar charts
-use std::time::Duration;
 
 use anyhow::Result;
-use friendly::duration;
 use ratatui::{
     prelude::*,
-    widgets::{Bar, BarChart, BarGroup, Dataset, Paragraph},
+    widgets::{Bar, BarChart, BarGroup},
 };
 use sysinfo::{CpuExt, SystemExt};
 
