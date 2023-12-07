@@ -8,6 +8,7 @@ use crate::SystemState;
 use self::{banner::render_banner, quicklook::render_quicklook};
 
 mod banner;
+mod meter;
 mod quicklook;
 
 pub fn render_screen(frame: &mut Frame, state: &SystemState) -> Result<()> {
