@@ -11,6 +11,8 @@ anyhow = "~1.0"
 log = "~0.4"
 fern = "~0.6"
 clap = { version = "~4.4", features = ["derive"] }
+
+crossterm = "~0.27"
 ratatui = "~0.24"
 
 friendly = "~0.1"

@@ -37,9 +37,10 @@ impl DumpOpts {
         sleep(wait);
         state.refresh()?;
         info!(
-            "database info for {} ({})",
+            "database info for {} ({} {})",
             state.system.host_name().unwrap_or("<unnamed>".into()),
-            state.system.long_os_version().unwrap_or("unknown".into()),
+            state.system.distribution_id(),
+            state.system.os_version().unwrap_or_default(),
         );
 
         for dump in &self.dumps {
