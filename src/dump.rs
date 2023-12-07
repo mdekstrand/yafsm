@@ -36,6 +36,11 @@ impl DumpOpts {
         debug!("waiting {} to refresh", friendly::duration(wait));
         sleep(wait);
         state.refresh()?;
+        info!(
+            "database info for {} ({})",
+            state.system.host_name().unwrap_or("<unnamed>".into()),
+            state.system.long_os_version().unwrap_or("unknown".into()),
+        );
 
         for dump in &self.dumps {
             match dump {
