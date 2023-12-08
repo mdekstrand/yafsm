@@ -8,7 +8,8 @@ use friendly::{bytes, scalar};
 use log::*;
 use sysinfo::{CpuExt, SystemExt};
 
-use crate::model::SystemMonitor;
+use crate::backend::MonitorBackend;
+use crate::model::*;
 
 #[derive(ValueEnum, Clone, Debug)]
 enum DumpType {
@@ -31,7 +32,10 @@ impl DumpOpts {
         !self.dumps.is_empty()
     }
 
-    pub fn dump(&self, state: &mut SystemMonitor) -> Result<()> {
+    pub fn dump<B>(&self, state: &mut MonitorState<B>) -> Result<()>
+    where
+        B: MonitorBackend,
+    {
         let wait = Duration::from_millis(self.dump_wait);
         debug!("waiting {} to refresh", friendly::duration(wait));
         sleep(wait);
@@ -45,15 +49,15 @@ impl DumpOpts {
 
         for dump in &self.dumps {
             match dump {
-                DumpType::Cpu => self.dump_cpu(&state)?,
-                DumpType::Mem => self.dump_memory(&state)?,
+                DumpType::Cpu => self.dump_cpu(&state.backend)?,
+                DumpType::Mem => self.dump_memory(&state.backend)?,
             }
         }
 
         Ok(())
     }
 
-    fn dump_cpu(&self, state: &SystemMonitor) -> Result<()> {
+    fn dump_cpu(&self, state: &dyn MonitorBackend) -> Result<()> {
         let cpus = state.system.cpus();
         for cpu in cpus {
             println!(
@@ -67,19 +71,12 @@ impl DumpOpts {
         Ok(())
     }
 
-    fn dump_memory(&self, state: &SystemMonitor) -> Result<()> {
-        let sys = &state.system;
+    fn dump_memory(&self, state: &dyn MonitorBackend) -> Result<()> {
+        let mem = state.memory()?;
+        let swap = state.swap()?;
 
-        println!(
-            "MEM: {} / {} used",
-            bytes(sys.used_memory()),
-            bytes(sys.total_memory())
-        );
-        println!(
-            "SWP: {} / {} used",
-            bytes(sys.used_swap()),
-            bytes(sys.total_swap())
-        );
+        println!("MEM: {} / {} used", bytes(mem.used), bytes(mem.total));
+        println!("SWP: {} / {} used", bytes(swap.used), bytes(swap.total));
 
         Ok(())
     }

@@ -3,7 +3,7 @@
 use anyhow::Result;
 use ratatui::prelude::*;
 
-use crate::SystemMonitor;
+use crate::{backend::MonitorBackend, MonitorState};
 
 use self::{banner::render_banner, quicklook::render_quicklook};
 
@@ -11,7 +11,10 @@ mod banner;
 mod meter;
 mod quicklook;
 
-pub fn render_screen(frame: &mut Frame, state: &SystemMonitor) -> Result<()> {
+pub fn render_screen<B>(frame: &mut Frame, state: &MonitorState<B>) -> Result<()>
+where
+    B: MonitorBackend,
+{
     let layout = Layout::new()
         .direction(Direction::Vertical)
         .constraints([

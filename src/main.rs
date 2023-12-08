@@ -1,6 +1,7 @@
 use std::{path::PathBuf, time::Duration};
 
 use anyhow::Result;
+use backend::sysmon;
 use clap::Parser;
 
 mod backend;
@@ -13,7 +14,7 @@ mod view;
 
 use dump::DumpOpts;
 use event_loop::run_event_loop;
-use model::{Options, SystemMonitor};
+use model::{MonitorState, Options};
 use term::with_terminal;
 
 /// System process monitor.
@@ -42,7 +43,9 @@ fn main() -> Result<()> {
     let mut options = Options::default();
     options.refresh = Duration::from_secs_f32(cli.refresh);
 
-    let mut state = SystemMonitor::init(options)?;
+    let backend = sysmon::initialize()?;
+
+    let mut state = MonitorState::create(options, backend)?;
 
     if cli.dump.requested() {
         cli.dump.dump(&mut state)?;

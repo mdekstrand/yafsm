@@ -1,32 +1,54 @@
 //! Access to the different monitors.
 use anyhow::*;
-use log::*;
-use sysinfo::{CpuRefreshKind, RefreshKind, System, SystemExt};
 
-use crate::backend::sysmon::init_system;
+use crate::backend::sysmon::initialize;
 
+pub mod cpu;
+pub mod memory;
 pub mod options;
+pub mod swap;
 
+pub use cpu::CPU;
+pub use memory::Memory;
 pub use options::Options;
+pub use swap::Swap;
 
-pub struct SystemMonitor {
-    pub options: Options,
-    pub system: System,
+use crate::backend::MonitorBackend;
+
+/// Interface for data monitor sources.
+///
+/// This is defined as a trait so the monitor state can be object-safe, where that might
+/// be helpful.
+pub trait MonitorData {
+    fn backend(&self) -> &dyn MonitorBackend;
 }
 
-impl SystemMonitor {
-    pub fn init(options: Options) -> Result<SystemMonitor> {
-        let mut system = init_system()?;
-        system.refresh_specifics(RefreshKind::everything());
-        Ok(SystemMonitor { options, system })
+/// Container for system monitor state.
+pub struct MonitorState<B: MonitorBackend> {
+    pub options: Options,
+    pub backend: B,
+}
+
+impl<B> MonitorState<B>
+where
+    B: MonitorBackend,
+{
+    pub fn create(options: Options, backend: B) -> Result<MonitorState<B>> {
+        let mut system = initialize()?;
+
+        Ok(MonitorState { options, backend })
     }
 
     pub fn refresh(&mut self) -> Result<()> {
-        debug!("refreshing system");
-        let specs = RefreshKind::new()
-            .with_cpu(CpuRefreshKind::everything())
-            .with_memory();
-        self.system.refresh_specifics(specs);
-        Ok(())
+        self.backend.update(&self.options)
+    }
+}
+
+impl<B> MonitorData for MonitorState<B>
+where
+    B: MonitorBackend,
+{
+    fn backend(&self) -> &dyn MonitorBackend {
+        &self.backend
     }
 }

@@ -5,9 +5,9 @@ use friendly::duration;
 use ratatui::{prelude::*, widgets::Paragraph};
 use sysinfo::SystemExt;
 
-use crate::SystemMonitor;
+use crate::model::MonitorData;
 
-pub(super) fn render_banner(frame: &mut Frame, state: &SystemMonitor, area: Rect) -> Result<()> {
+pub(super) fn render_banner(frame: &mut Frame, state: &dyn MonitorData, area: Rect) -> Result<()> {
     let layout = Layout::new()
         .direction(Direction::Horizontal)
         .constraints([
