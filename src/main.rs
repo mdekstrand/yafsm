@@ -13,7 +13,7 @@ mod view;
 
 use dump::DumpOpts;
 use event_loop::run_event_loop;
-use model::{Options, SystemStatus};
+use model::{Options, SystemMonitor};
 use term::with_terminal;
 
 /// System process monitor.
@@ -42,7 +42,7 @@ fn main() -> Result<()> {
     let mut options = Options::default();
     options.refresh = Duration::from_secs_f32(cli.refresh);
 
-    let mut state = SystemStatus::init(options)?;
+    let mut state = SystemMonitor::init(options)?;
 
     if cli.dump.requested() {
         cli.dump.dump(&mut state)?;

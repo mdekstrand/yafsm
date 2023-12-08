@@ -9,16 +9,16 @@ pub mod options;
 
 pub use options::Options;
 
-pub struct SystemStatus {
+pub struct SystemMonitor {
     pub options: Options,
     pub system: System,
 }
 
-impl SystemStatus {
-    pub fn init(options: Options) -> Result<SystemStatus> {
+impl SystemMonitor {
+    pub fn init(options: Options) -> Result<SystemMonitor> {
         let mut system = init_system()?;
         system.refresh_specifics(RefreshKind::everything());
-        Ok(SystemStatus { options, system })
+        Ok(SystemMonitor { options, system })
     }
 
     pub fn refresh(&mut self) -> Result<()> {

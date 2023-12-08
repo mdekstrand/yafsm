@@ -4,9 +4,9 @@ use anyhow::Result;
 use crossterm::event::{poll, read, Event, KeyCode, KeyEventKind};
 use ratatui::{backend::Backend, Terminal};
 
-use crate::{model::SystemStatus, view::render_screen};
+use crate::{model::SystemMonitor, view::render_screen};
 
-pub fn run_event_loop<B>(term: &mut Terminal<B>, state: &mut SystemStatus) -> Result<()>
+pub fn run_event_loop<B>(term: &mut Terminal<B>, state: &mut SystemMonitor) -> Result<()>
 where
     B: Backend,
 {

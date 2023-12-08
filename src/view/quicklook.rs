@@ -4,11 +4,11 @@ use anyhow::Result;
 use ratatui::prelude::*;
 use sysinfo::{CpuExt, SystemExt};
 
-use crate::SystemStatus;
+use crate::SystemMonitor;
 
 use super::meter::Meter;
 
-pub(super) fn render_quicklook(frame: &mut Frame, state: &SystemStatus, area: Rect) -> Result<()> {
+pub(super) fn render_quicklook(frame: &mut Frame, state: &SystemMonitor, area: Rect) -> Result<()> {
     let cpu_usage = state.system.global_cpu_info().cpu_usage();
     let mem_tot = state.system.total_memory() as f32;
     let mem_usage = state.system.used_memory() as f32 / mem_tot;

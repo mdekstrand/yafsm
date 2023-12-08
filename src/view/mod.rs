@@ -3,7 +3,7 @@
 use anyhow::Result;
 use ratatui::prelude::*;
 
-use crate::SystemStatus;
+use crate::SystemMonitor;
 
 use self::{banner::render_banner, quicklook::render_quicklook};
 
@@ -11,7 +11,7 @@ mod banner;
 mod meter;
 mod quicklook;
 
-pub fn render_screen(frame: &mut Frame, state: &SystemStatus) -> Result<()> {
+pub fn render_screen(frame: &mut Frame, state: &SystemMonitor) -> Result<()> {
     let layout = Layout::new()
         .direction(Direction::Vertical)
         .constraints([
