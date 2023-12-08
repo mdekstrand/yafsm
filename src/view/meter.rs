@@ -6,7 +6,6 @@ use ratatui::prelude::*;
 use ratatui::widgets::Widget;
 
 // Note: Unicode bars start at U+2588 (full bar).
-const BLOCK_CHAR: char = '\u{2588}';
 
 pub struct Meter {
     label: Cow<'static, str>,
@@ -74,7 +73,7 @@ impl Widget for Meter {
         let nfull = min(blocks, bmax);
         let mut bar = "\u{2588}".repeat(nfull as usize);
         if blocks < bmax && partial > 0 {
-            bar.push(char::from_u32(BLOCK_CHAR as u32 + 8 - partial).expect("invalid block char"));
+            bar.push(char::from_u32(0x2588 + 8 - partial).expect("invalid block char"));
         }
         buf.set_string(b.x + 1, b.y, &bar, Style::new().fg(color));
 
@@ -93,9 +92,7 @@ impl Widget for Meter {
                 let send = (svbs - partial) % 8;
                 let mut sbar = "\u{2588}".repeat(sblocks as usize);
                 if send > 0 {
-                    sbar.push(
-                        char::from_u32(BLOCK_CHAR as u32 + 8 - send).expect("invalid block char"),
-                    );
+                    sbar.push(char::from_u32(0x2588 + 8 - send).expect("invalid block char"));
                 }
                 buf.set_string(
                     b.x + 2 + min(blocks, bmax) as u16,
