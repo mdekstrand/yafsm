@@ -88,7 +88,7 @@ impl Widget for Meter {
                     width: 1,
                     height: 1,
                 },
-                Style::new().bg(Color::Cyan),
+                Style::new().fg(color).bg(Color::Cyan),
             );
             if svbs > partial {
                 let sblocks = (svbs - partial) / 8;
