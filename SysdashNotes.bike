@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8"/>
+  </head>
+  <body>
+    <ul id="t4HVFNyf">
+      <li id="3C" data-type="heading">
+        <p>Design Ideas</p>
+        <ul>
+          <li id="Wj">
+            <p>System refactor</p>
+            <ul>
+              <li id="lP" data-type="task">
+                <p>System returns model objects abstracting the base</p>
+              </li>
+              <li id="bz" data-type="task">
+                <p>Split “system” into 2+ pieces</p>
+                <ul>
+                  <li id="-b">
+                    <p>options</p>
+                  </li>
+                  <li id="Zo">
+                    <p>collector</p>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li id="EA">
+            <p>Display widgets</p>
+            <ul>
+              <li id="wD">
+                <p>Quicklook meter bin</p>
+              </li>
+              <li id="4v">
+                <p>Row of widgets</p>
+                <ul>
+                  <li id="TJ">
+                    <p>Each has columns + priority</p>
+                  </li>
+                  <li id="x6">
+                    <p>Base design:</p>
+                    <ul>
+                      <li id="51O">
+                        <p>6-col label</p>
+                      </li>
+                      <li id="uWW">
+                        <p>6-col text (supports 100.0%)</p>
+                      </li>
+                      <li id="ga9">
+                        <p>1-col margins</p>
+                      </li>
+                      <li id="Vvw">
+                        <p>1-col gutter</p>
+                      </li>
+                      <li id="fzE">
+                        <p>Total: 9 cols / widget</p>
+                      </li>
+                      <li id="-XF">
+                        <p>Should it be flexible on label &amp; text widths?</p>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </body>
+</html>
