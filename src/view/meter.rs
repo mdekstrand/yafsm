@@ -71,11 +71,9 @@ impl Widget for Meter {
             .second_value
             .map(|f| ((space * 8) as f32 * f).floor() as u32);
 
-        let mut bar = String::with_capacity(space as usize);
-        for _ in 0..min(blocks, bmax) {
-            bar.push(BLOCK_CHAR);
-        }
-        if blocks <= bmax && partial > 0 {
+        let nfull = min(blocks, bmax);
+        let mut bar = "\u{2588}".repeat(nfull as usize);
+        if blocks < bmax && partial > 0 {
             bar.push(char::from_u32(BLOCK_CHAR as u32 + 8 - partial).expect("invalid block char"));
         }
         buf.set_string(b.x + 1, b.y, &bar, Style::new().fg(color));
@@ -83,7 +81,7 @@ impl Widget for Meter {
         if let Some(svbs) = svbs {
             buf.set_style(
                 Rect {
-                    x: b.x + 1 + bar.chars().count() as u16,
+                    x: b.x + 1 + nfull as u16,
                     y: b.y,
                     width: 1,
                     height: 1,
