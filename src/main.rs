@@ -1,18 +1,19 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, time::Duration};
 
 use anyhow::Result;
 use clap::Parser;
 
+mod backend;
 mod dump;
 mod event_loop;
 mod logging;
-mod monitors;
+mod model;
 mod term;
 mod view;
 
 use dump::DumpOpts;
 use event_loop::run_event_loop;
-use monitors::SystemState;
+use model::{Options, SystemStatus};
 use term::with_terminal;
 
 /// System process monitor.
@@ -38,14 +39,17 @@ fn main() -> Result<()> {
     let cli = CLIOptions::parse();
     logging::initialize(cli.log_file.as_ref(), cli.dump.requested(), cli.debug)?;
 
-    let mut state = SystemState::init()?;
+    let mut options = Options::default();
+    options.refresh = Duration::from_secs_f32(cli.refresh);
+
+    let mut state = SystemStatus::init(options)?;
 
     if cli.dump.requested() {
         cli.dump.dump(&mut state)?;
         return Ok(());
     }
 
-    with_terminal(|term| run_event_loop(term, &mut state, cli.refresh))?;
+    with_terminal(|term| run_event_loop(term, &mut state))?;
 
     Ok(())
 }

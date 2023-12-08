@@ -8,7 +8,7 @@ use friendly::{bytes, scalar};
 use log::*;
 use sysinfo::{CpuExt, SystemExt};
 
-use crate::monitors::SystemState;
+use crate::model::SystemStatus;
 
 #[derive(ValueEnum, Clone, Debug)]
 enum DumpType {
@@ -31,7 +31,7 @@ impl DumpOpts {
         !self.dumps.is_empty()
     }
 
-    pub fn dump(&self, state: &mut SystemState) -> Result<()> {
+    pub fn dump(&self, state: &mut SystemStatus) -> Result<()> {
         let wait = Duration::from_millis(self.dump_wait);
         debug!("waiting {} to refresh", friendly::duration(wait));
         sleep(wait);
@@ -53,7 +53,7 @@ impl DumpOpts {
         Ok(())
     }
 
-    fn dump_cpu(&self, state: &SystemState) -> Result<()> {
+    fn dump_cpu(&self, state: &SystemStatus) -> Result<()> {
         let cpus = state.system.cpus();
         for cpu in cpus {
             println!(
@@ -67,7 +67,7 @@ impl DumpOpts {
         Ok(())
     }
 
-    fn dump_memory(&self, state: &SystemState) -> Result<()> {
+    fn dump_memory(&self, state: &SystemStatus) -> Result<()> {
         let sys = &state.system;
 
         println!(

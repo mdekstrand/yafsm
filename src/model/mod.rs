@@ -3,19 +3,22 @@ use anyhow::*;
 use log::*;
 use sysinfo::{CpuRefreshKind, RefreshKind, System, SystemExt};
 
-use self::system::init_system;
+use crate::backend::sysmon::init_system;
 
-pub mod system;
+pub mod options;
 
-pub struct SystemState {
+pub use options::Options;
+
+pub struct SystemStatus {
+    pub options: Options,
     pub system: System,
 }
 
-impl SystemState {
-    pub fn init() -> Result<SystemState> {
+impl SystemStatus {
+    pub fn init(options: Options) -> Result<SystemStatus> {
         let mut system = init_system()?;
         system.refresh_specifics(RefreshKind::everything());
-        Ok(SystemState { system })
+        Ok(SystemStatus { options, system })
     }
 
     pub fn refresh(&mut self) -> Result<()> {
