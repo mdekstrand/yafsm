@@ -6,9 +6,9 @@ use anyhow::Result;
 use clap::{Args, ValueEnum};
 use friendly::{bytes, scalar};
 use log::*;
-use sysinfo::{CpuExt, SystemExt};
 
 use crate::backend::MonitorBackend;
+use crate::model::source::SystemInfo;
 use crate::model::*;
 
 #[derive(ValueEnum, Clone, Debug)]
@@ -41,37 +41,29 @@ impl DumpOpts {
         sleep(wait);
         state.refresh()?;
         info!(
-            "database info for {} ({} {})",
-            state.system.host_name().unwrap_or("<unnamed>".into()),
-            state.system.distribution_id(),
-            state.system.os_version().unwrap_or_default(),
+            "system info for {} ({})",
+            state.hostname()?,
+            state.system_version()?,
         );
 
         for dump in &self.dumps {
             match dump {
-                DumpType::Cpu => self.dump_cpu(&state.backend)?,
-                DumpType::Mem => self.dump_memory(&state.backend)?,
+                DumpType::Cpu => self.dump_cpu(state)?,
+                DumpType::Mem => self.dump_memory(state)?,
             }
         }
 
         Ok(())
     }
 
-    fn dump_cpu(&self, state: &dyn MonitorBackend) -> Result<()> {
-        let cpus = state.system.cpus();
-        for cpu in cpus {
-            println!(
-                "CPU {}: {:5.1}% @ {}",
-                cpu.name(),
-                cpu.cpu_usage(),
-                scalar(cpu.frequency() * 1000_000).suffix("Hz")
-            );
-        }
+    fn dump_cpu(&self, state: &dyn MonitorData) -> Result<()> {
+        let cpu = state.global_cpu()?;
+        println!("CPU: {:5.1}%", cpu.utilization);
 
         Ok(())
     }
 
-    fn dump_memory(&self, state: &dyn MonitorBackend) -> Result<()> {
+    fn dump_memory(&self, state: &dyn MonitorData) -> Result<()> {
         let mem = state.memory()?;
         let swap = state.swap()?;
 

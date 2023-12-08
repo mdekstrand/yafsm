@@ -18,20 +18,13 @@ pub(super) fn render_banner(frame: &mut Frame, state: &dyn MonitorData, area: Re
         .split(area);
 
     let host = Paragraph::new(vec![Line::from(vec![
-        Span::styled(
-            state.system.host_name().unwrap_or("unnamed".into()),
-            Style::new().bold(),
-        ),
-        Span::raw(format!(
-            " ({} {})",
-            state.system.distribution_id(),
-            state.system.os_version().unwrap_or_default()
-        )),
+        Span::styled(state.hostname()?, Style::new().bold()),
+        Span::raw(format!(" ({})", state.system_version()?)),
     ])])
     .alignment(Alignment::Left);
     let uptime = Paragraph::new(vec![Line::from(format!(
         "Uptime: {}",
-        duration(Duration::from_secs(state.system.uptime()))
+        duration(state.uptime()?)
     ))])
     .alignment(Alignment::Right);
 

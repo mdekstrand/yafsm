@@ -1,6 +1,8 @@
 //! System monitoring with [sysinfo].
 
-use anyhow::Result;
+use std::time::Duration;
+
+use anyhow::{anyhow, Result};
 use log::*;
 use sysinfo::{CpuExt, CpuRefreshKind, RefreshKind, System, SystemExt};
 
@@ -24,16 +26,32 @@ impl MonitorBackend for System {
         Ok(())
     }
 
-    fn global_cpu(&mut self) -> Result<CPU> {
+    fn hostname(&self) -> Result<String> {
+        self.host_name().ok_or(anyhow!("no host name"))
+    }
+
+    fn system_version(&self) -> Result<String> {
+        let os = self.distribution_id();
+        let osv = self.os_version().ok_or(anyhow!("no system version"))?;
+        let k = self.name().ok_or(anyhow!("no system name"))?;
+        let kv = self.kernel_version().ok_or(anyhow!("no kernel version"))?;
+        Ok(format!("{} {} with {} {}", os, osv, k, kv))
+    }
+
+    fn uptime(&self) -> Result<Duration> {
+        Ok(Duration::from_secs(SystemExt::uptime(self)))
+    }
+
+    fn global_cpu(&self) -> Result<CPU> {
         Ok(CPU {
             utilization: self.global_cpu_info().cpu_usage(),
         })
     }
-    fn memory(&mut self) -> Result<Memory> {
+    fn memory(&self) -> Result<Memory> {
         let used = self.used_memory();
         let total = self.total_memory();
         let free = self.free_memory();
-        let freeable = self.available_memory() - free;
+        let freeable = self.available_memory().saturating_sub(free);
         Ok(Memory {
             used,
             freeable,
@@ -42,7 +60,7 @@ impl MonitorBackend for System {
         })
     }
 
-    fn swap(&mut self) -> Result<Swap> {
+    fn swap(&self) -> Result<Swap> {
         Ok(Swap {
             used: self.used_swap(),
             free: self.free_swap(),

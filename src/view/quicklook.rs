@@ -2,7 +2,6 @@
 
 use anyhow::Result;
 use ratatui::prelude::*;
-use sysinfo::{CpuExt, SystemExt};
 
 use crate::model::MonitorData;
 
@@ -13,14 +12,11 @@ pub(super) fn render_quicklook(
     state: &dyn MonitorData,
     area: Rect,
 ) -> Result<()> {
-    let cpu_usage = state.system.global_cpu_info().cpu_usage();
-    let mem_tot = state.system.total_memory() as f32;
-    let mem_usage = state.system.used_memory() as f32 / mem_tot;
-    let mem_avail =
-        (state.system.available_memory() as f32 - state.system.free_memory() as f32) / mem_tot;
-    let swap_usage = state.system.used_swap() as f32 / state.system.total_swap() as f32;
+    let cpu = state.global_cpu()?;
+    let mem = state.memory()?;
+    let swap = state.swap()?;
     frame.render_widget(
-        Meter::new("CPU").value(cpu_usage / 100.0),
+        Meter::new("CPU").value(cpu.utilization),
         Rect {
             y: area.y + 1,
             height: 1,
@@ -28,7 +24,9 @@ pub(super) fn render_quicklook(
         },
     );
     frame.render_widget(
-        Meter::new("MEM").value(mem_usage).second_value(mem_avail),
+        Meter::new("MEM")
+            .value(mem.used_frac())
+            .second_value(mem.freeable_frac()),
         Rect {
             y: area.y + 2,
             height: 1,
@@ -36,7 +34,7 @@ pub(super) fn render_quicklook(
         },
     );
     frame.render_widget(
-        Meter::new("SWP").value(swap_usage),
+        Meter::new("SWP").value(swap.used_frac()),
         Rect {
             y: area.y + 3,
             height: 1,

@@ -1,4 +1,6 @@
 //! Access to the different monitors.
+use std::time::Duration;
+
 use anyhow::*;
 
 use crate::backend::sysmon::initialize;
@@ -6,6 +8,7 @@ use crate::backend::sysmon::initialize;
 pub mod cpu;
 pub mod memory;
 pub mod options;
+pub mod source;
 pub mod swap;
 
 pub use cpu::CPU;
@@ -15,11 +18,13 @@ pub use swap::Swap;
 
 use crate::backend::MonitorBackend;
 
+use self::source::{SystemInfo, SystemResources};
+
 /// Interface for data monitor sources.
 ///
 /// This is defined as a trait so the monitor state can be object-safe, where that might
 /// be helpful.
-pub trait MonitorData {
+pub trait MonitorData: SystemInfo + SystemResources {
     fn backend(&self) -> &dyn MonitorBackend;
 }
 
@@ -50,5 +55,39 @@ where
 {
     fn backend(&self) -> &dyn MonitorBackend {
         &self.backend
+    }
+}
+
+impl<B> SystemInfo for MonitorState<B>
+where
+    B: MonitorBackend,
+{
+    fn hostname(&self) -> Result<String> {
+        self.backend.hostname()
+    }
+
+    fn system_version(&self) -> Result<String> {
+        self.backend.system_version()
+    }
+
+    fn uptime(&self) -> Result<Duration> {
+        self.backend.uptime()
+    }
+}
+
+impl<B> SystemResources for MonitorState<B>
+where
+    B: MonitorBackend,
+{
+    fn global_cpu(&self) -> Result<CPU> {
+        self.backend.global_cpu()
+    }
+
+    fn memory(&self) -> Result<Memory> {
+        self.backend.memory()
+    }
+
+    fn swap(&self) -> Result<Swap> {
+        self.backend.swap()
     }
 }
