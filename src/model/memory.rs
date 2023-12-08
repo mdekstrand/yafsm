@@ -21,7 +21,7 @@ impl Memory {
 
     /// Compute the freeable memory as a fraction of total.
     pub fn freeable_frac(&self) -> f32 {
-        self.used as f32 / self.total as f32
+        self.freeable as f32 / self.total as f32
     }
 
     /// Compute the free memory as a fraction of total.
