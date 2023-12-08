@@ -1,10 +1,7 @@
 //! Quick-look bar charts
 
 use anyhow::Result;
-use ratatui::{
-    prelude::*,
-    widgets::{Bar, BarChart, BarGroup},
-};
+use ratatui::prelude::*;
 use sysinfo::{CpuExt, SystemExt};
 
 use crate::SystemState;
