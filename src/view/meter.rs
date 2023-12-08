@@ -11,6 +11,7 @@ const BLOCK_CHAR: char = '\u{2588}';
 pub struct Meter {
     label: Cow<'static, str>,
     value: f32,
+    second_value: Option<f32>,
 }
 
 impl Meter {
@@ -18,11 +19,19 @@ impl Meter {
         Meter {
             label: label.into(),
             value: f32::NAN,
+            second_value: None,
         }
     }
 
     pub fn value(self, value: f32) -> Meter {
         Meter { value, ..self }
+    }
+
+    pub fn second_value(self, sv: f32) -> Meter {
+        Meter {
+            second_value: Some(sv),
+            ..self
+        }
     }
 }
 
@@ -58,6 +67,9 @@ impl Widget for Meter {
         let partial = bw % 8;
         let tlen = txt.len() as u32;
         let bmax = space as u32 - tlen;
+        let svbs = self
+            .second_value
+            .map(|f| ((space * 8) as f32 * f).floor() as u32);
 
         let mut bar = String::with_capacity(space as usize);
         for _ in 0..min(blocks, bmax) {
@@ -67,6 +79,35 @@ impl Widget for Meter {
             bar.push(char::from_u32(BLOCK_CHAR as u32 + 8 - partial).expect("invalid block char"));
         }
         buf.set_string(b.x + 1, b.y, &bar, Style::new().fg(color));
+
+        if let Some(svbs) = svbs {
+            buf.set_style(
+                Rect {
+                    x: b.x + 1 + bar.chars().count() as u16,
+                    y: b.y,
+                    width: 1,
+                    height: 1,
+                },
+                Style::new().bg(Color::Cyan),
+            );
+            if svbs > partial {
+                let sblocks = (svbs - partial) / 8;
+                let send = (svbs - partial) % 8;
+                let mut sbar = "\u{2588}".repeat(sblocks as usize);
+                if send > 0 {
+                    sbar.push(
+                        char::from_u32(BLOCK_CHAR as u32 + 8 - send).expect("invalid block char"),
+                    );
+                }
+                buf.set_string(
+                    b.x + 2 + min(blocks, bmax) as u16,
+                    b.y,
+                    &sbar,
+                    Style::new().fg(Color::Cyan),
+                );
+            }
+        }
+
         buf.set_string(
             b.x + 1 + space - tlen as u16,
             b.y,

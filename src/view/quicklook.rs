@@ -10,7 +10,10 @@ use super::meter::Meter;
 
 pub(super) fn render_quicklook(frame: &mut Frame, state: &SystemState, area: Rect) -> Result<()> {
     let cpu_usage = state.system.global_cpu_info().cpu_usage();
-    let mem_usage = state.system.used_memory() as f32 / state.system.total_memory() as f32;
+    let mem_tot = state.system.total_memory() as f32;
+    let mem_usage = state.system.used_memory() as f32 / mem_tot;
+    let mem_avail =
+        (state.system.available_memory() as f32 - state.system.free_memory() as f32) / mem_tot;
     let swap_usage = state.system.used_swap() as f32 / state.system.total_swap() as f32;
     frame.render_widget(
         Meter::new("CPU").value(cpu_usage / 100.0),
@@ -21,7 +24,7 @@ pub(super) fn render_quicklook(frame: &mut Frame, state: &SystemState, area: Rec
         },
     );
     frame.render_widget(
-        Meter::new("MEM").value(mem_usage),
+        Meter::new("MEM").value(mem_usage).second_value(mem_avail),
         Rect {
             y: area.y + 2,
             height: 1,
