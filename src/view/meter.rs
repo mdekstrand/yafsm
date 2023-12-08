@@ -64,7 +64,7 @@ impl Widget for Meter {
             bar.push(BLOCK_CHAR);
         }
         if blocks <= bmax && partial > 0 {
-            bar.push(char::from_u32(BLOCK_CHAR as u32 + 9 - partial).expect("invalid block char"));
+            bar.push(char::from_u32(BLOCK_CHAR as u32 + 8 - partial).expect("invalid block char"));
         }
         buf.set_string(b.x + 1, b.y, &bar, Style::new().fg(color));
         buf.set_string(
