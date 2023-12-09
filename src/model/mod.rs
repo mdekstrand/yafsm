@@ -19,6 +19,7 @@ pub use memory::Memory;
 pub use options::Options;
 pub use process::Process;
 pub use swap::Swap;
+use uzers::{Users, UsersCache};
 
 use crate::backend::MonitorBackend;
 
@@ -31,12 +32,14 @@ use self::source::{RunningProcesses, SystemInfo, SystemResources};
 /// but many of them handle checking whether that feature should be enabled.
 pub trait MonitorData: SystemInfo + SystemResources + RunningProcesses {
     fn backend(&self) -> &dyn MonitorBackend;
+    fn lookup_user(&self, uid: u32) -> Result<Option<String>>;
 }
 
 /// Container for system monitor state.
 pub struct MonitorState<B: MonitorBackend> {
     pub options: Options,
     pub backend: B,
+    pub user_db: UsersCache,
 }
 
 impl<B> MonitorState<B>
@@ -44,7 +47,11 @@ where
     B: MonitorBackend,
 {
     pub fn create(options: Options, backend: B) -> Result<MonitorState<B>> {
-        Ok(MonitorState { options, backend })
+        Ok(MonitorState {
+            options,
+            backend,
+            user_db: UsersCache::new(),
+        })
     }
 
     pub fn refresh(&mut self) -> Result<()> {
@@ -58,6 +65,11 @@ where
 {
     fn backend(&self) -> &dyn MonitorBackend {
         &self.backend
+    }
+
+    fn lookup_user(&self, uid: u32) -> Result<Option<String>> {
+        let u = self.user_db.get_user_by_uid(uid);
+        Ok(u.map(|u| u.name().to_string_lossy().to_string()))
     }
 }
 
