@@ -42,6 +42,7 @@ pub struct ICEntry {
     v_style: Option<Style>,
 }
 
+#[allow(dead_code)]
 impl ICEntry {
     pub fn new<S: Into<Cow<'static, str>>>(label: S) -> ICEntry {
         ICEntry {
@@ -107,6 +108,7 @@ pub struct InfoCols {
     entries: Vec<ICEntry>,
 }
 
+#[allow(dead_code)]
 impl InfoCols {
     pub fn new() -> InfoCols {
         InfoCols {
@@ -119,7 +121,7 @@ impl InfoCols {
         self
     }
 
-    pub fn add_str<S, V>(mut self, label: S, str: V) -> InfoCols
+    pub fn add_str<S, V>(self, label: S, str: V) -> InfoCols
     where
         S: Into<Cow<'static, str>>,
         V: Into<Cow<'static, str>>,
@@ -127,19 +129,19 @@ impl InfoCols {
         self.add(ICEntry::new(label).string(str))
     }
 
-    pub fn add_pct<S: Into<Cow<'static, str>>>(mut self, label: S, pct: f32) -> InfoCols {
+    pub fn add_pct<S: Into<Cow<'static, str>>>(self, label: S, pct: f32) -> InfoCols {
         self.add(ICEntry::new(label).pct(pct))
     }
 
-    pub fn add_bytes<S: Into<Cow<'static, str>>>(mut self, label: S, bytes: u64) -> InfoCols {
+    pub fn add_bytes<S: Into<Cow<'static, str>>>(self, label: S, bytes: u64) -> InfoCols {
         self.add(ICEntry::new(label).bytes(bytes))
     }
 
-    pub fn add_count<S: Into<Cow<'static, str>>>(mut self, label: S, count: u64) -> InfoCols {
+    pub fn add_count<S: Into<Cow<'static, str>>>(self, label: S, count: u64) -> InfoCols {
         self.add(ICEntry::new(label).count(count))
     }
 
-    pub fn add_value<S: Into<Cow<'static, str>>>(mut self, label: S, val: f32) -> InfoCols {
+    pub fn add_value<S: Into<Cow<'static, str>>>(self, label: S, val: f32) -> InfoCols {
         self.add(ICEntry::new(label).value(val))
     }
 
