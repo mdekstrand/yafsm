@@ -59,8 +59,8 @@ impl Widget for Meter {
                 continue;
             }
 
-            let blocks = bw / 8;
-            let partial = bw % 8;
+            let blocks = (bw - pre_w) / 8;
+            let partial = (bw - pre_w) % 8;
 
             let mut bar = "\u{2588}".repeat(blocks as usize);
             if partial > 0 {
