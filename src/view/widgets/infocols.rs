@@ -1,7 +1,6 @@
 //! Info columns widget.
 use std::{borrow::Cow, cmp::min};
 
-use friendly::{scalar, scale::Decimal};
 use ratatui::prelude::*;
 use ratatui::widgets::Widget;
 
@@ -35,9 +34,77 @@ pub enum ICValue {
     Value(f32),
 }
 
+/// Entry for info col widgets.
+pub struct ICEntry {
+    label: Cow<'static, str>,
+    value: ICValue,
+    l_style: Option<Style>,
+    v_style: Option<Style>,
+}
+
+impl ICEntry {
+    pub fn new<S: Into<Cow<'static, str>>>(label: S) -> ICEntry {
+        ICEntry {
+            label: label.into(),
+            value: ICValue::Blank,
+            l_style: None,
+            v_style: None,
+        }
+    }
+
+    pub fn string<S: Into<Cow<'static, str>>>(self, val: S) -> ICEntry {
+        ICEntry {
+            value: ICValue::Str(val.into()),
+            ..self
+        }
+    }
+
+    pub fn pct(self, val: f32) -> ICEntry {
+        ICEntry {
+            value: ICValue::Pct(val),
+            ..self
+        }
+    }
+
+    pub fn bytes(self, val: u64) -> ICEntry {
+        ICEntry {
+            value: ICValue::Bytes(val),
+            ..self
+        }
+    }
+
+    pub fn count(self, val: u64) -> ICEntry {
+        ICEntry {
+            value: ICValue::Count(val),
+            ..self
+        }
+    }
+
+    pub fn value(self, val: f32) -> ICEntry {
+        ICEntry {
+            value: ICValue::Value(val),
+            ..self
+        }
+    }
+
+    pub fn label_style(self, style: Style) -> ICEntry {
+        ICEntry {
+            l_style: Some(style),
+            ..self
+        }
+    }
+
+    pub fn value_style(self, style: Style) -> ICEntry {
+        ICEntry {
+            v_style: Some(style),
+            ..self
+        }
+    }
+}
+
 /// Mini table-like widget for system information columns.
 pub struct InfoCols {
-    entries: Vec<(Cow<'static, str>, ICValue)>,
+    entries: Vec<ICEntry>,
 }
 
 impl InfoCols {
@@ -47,33 +114,33 @@ impl InfoCols {
         }
     }
 
+    pub fn add(mut self, e: ICEntry) -> InfoCols {
+        self.entries.push(e);
+        self
+    }
+
     pub fn add_str<S, V>(mut self, label: S, str: V) -> InfoCols
     where
         S: Into<Cow<'static, str>>,
         V: Into<Cow<'static, str>>,
     {
-        self.entries.push((label.into(), ICValue::Str(str.into())));
-        self
+        self.add(ICEntry::new(label).string(str))
     }
 
     pub fn add_pct<S: Into<Cow<'static, str>>>(mut self, label: S, pct: f32) -> InfoCols {
-        self.entries.push((label.into(), ICValue::Pct(pct)));
-        self
+        self.add(ICEntry::new(label).pct(pct))
     }
 
     pub fn add_bytes<S: Into<Cow<'static, str>>>(mut self, label: S, bytes: u64) -> InfoCols {
-        self.entries.push((label.into(), ICValue::Bytes(bytes)));
-        self
+        self.add(ICEntry::new(label).bytes(bytes))
     }
 
     pub fn add_count<S: Into<Cow<'static, str>>>(mut self, label: S, count: u64) -> InfoCols {
-        self.entries.push((label.into(), ICValue::Count(count)));
-        self
+        self.add(ICEntry::new(label).count(count))
     }
 
     pub fn add_value<S: Into<Cow<'static, str>>>(mut self, label: S, val: f32) -> InfoCols {
-        self.entries.push((label.into(), ICValue::Value(val)));
-        self
+        self.add(ICEntry::new(label).value(val))
     }
 
     pub fn col_width(&self) -> u16 {
@@ -99,20 +166,24 @@ impl Widget for InfoCols {
 
         let mut row = 0;
         let mut col = 0;
-        for (label, value) in self.entries {
+        for e in self.entries {
             let x = area.x + col * COL_WIDTH;
             let y = area.y + row;
 
             let mut l_style = Style::new();
-            let v_str = value.format();
-            let mut v_style = value.style();
-
-            if row == 0 && col == 0 {
+            if let Some(s) = e.l_style {
+                l_style = l_style.patch(s);
+            } else if row == 0 && col == 0 {
                 l_style = l_style.bold();
-                v_style = v_style.bold();
             }
 
-            buf.set_stringn(x + 1, y, label, LABEL_WIDTH as usize, l_style);
+            let v_str = e.value.format();
+            let mut v_style = e.value.style();
+            if let Some(vs) = e.v_style {
+                v_style = v_style.patch(vs);
+            }
+
+            buf.set_stringn(x + 1, y, e.label, LABEL_WIDTH as usize, l_style);
             buf.set_stringn(
                 // compute the position to right-align the display
                 // value formats use ASCII chars, so we can use len()
