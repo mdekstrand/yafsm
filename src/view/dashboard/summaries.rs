@@ -1,7 +1,7 @@
 //! Summary box displays.
 
 use anyhow::Result;
-use ratatui::style::{Style, Stylize};
+use ratatui::style::{Color, Style, Stylize};
 
 use crate::{
     model::MonitorData,
@@ -43,10 +43,41 @@ pub fn swap_summary(state: &dyn MonitorData) -> Result<InfoCols> {
 }
 
 pub fn load_summary(state: &dyn MonitorData) -> Result<InfoCols> {
+    let ncpus = state.cpu_count()? as f32;
     let load = state.load_avg()?;
     Ok(InfoCols::new()
-        .add_str("LOAD", format!("{}core", state.cpu_count()?))
-        .add_value("1min", load.one)
-        .add_value("5min", load.five)
-        .add_value("15min", load.fifteen))
+        .add(ICEntry::new("LOAD").string(format!("{}core", state.cpu_count()?)))
+        .add(
+            ICEntry::new("1min")
+                .value(load.one)
+                .value_style(Style::new().fg(if load.one >= ncpus {
+                    Color::Red
+                } else if load.one >= ncpus * 0.5 {
+                    Color::Magenta
+                } else {
+                    Color::White
+                })),
+        )
+        .add(
+            ICEntry::new("5min")
+                .value(load.five)
+                .value_style(Style::new().fg(if load.five >= ncpus {
+                    Color::Red
+                } else if load.five >= ncpus * 0.5 {
+                    Color::Magenta
+                } else {
+                    Color::White
+                })),
+        )
+        .add(
+            ICEntry::new("15min")
+                .value(load.fifteen)
+                .value_style(Style::new().fg(if load.fifteen >= ncpus {
+                    Color::Red
+                } else if load.fifteen >= ncpus * 0.5 {
+                    Color::Magenta
+                } else {
+                    Color::White
+                })),
+        ))
 }
