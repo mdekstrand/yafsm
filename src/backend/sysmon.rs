@@ -46,7 +46,9 @@ impl MonitorBackend for System {
     }
 
     fn cpu_count(&self) -> Result<u32> {
-        Ok(self.cpus().len() as u32)
+        self.physical_core_count()
+            .map(|s| s as u32)
+            .ok_or(anyhow!("CPU count unavailable"))
     }
 
     fn global_cpu(&self) -> Result<CPU> {

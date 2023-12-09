@@ -21,7 +21,7 @@ pub trait MonitorBackend {
     /// Get the system uptime.
     fn uptime(&self) -> Result<Duration>;
 
-    /// Get the CPU count.
+    /// Get the number of physical CPU cores.
     fn cpu_count(&self) -> Result<u32>;
 
     /// Get overall CPU utilization.
