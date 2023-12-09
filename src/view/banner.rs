@@ -1,5 +1,5 @@
 use anyhow::Result;
-use chrono::{DateTime, Local};
+use chrono::Local;
 use friendly::duration;
 use ratatui::{prelude::*, widgets::Paragraph};
 
