@@ -149,11 +149,9 @@ impl ICValue {
             ICValue::Pct(p) => format!("{:4.1}%", p).into(),
             ICValue::Bytes(b) => fmt_bytes(*b).into(),
             ICValue::Count(c) => fmt_si_val(*c).into(),
-            ICValue::Value(v) => scalar(*v)
-                .scale(Decimal::UNIT)
-                .sig_figs(4)
-                .to_string()
-                .into(),
+            ICValue::Value(v) if *v >= 100.0 => format!("{:.0}", v).into(),
+            ICValue::Value(v) if *v >= 10.0 => format!("{:.1}", v).into(),
+            ICValue::Value(v) => format!("{:.2}", v).into(),
         }
     }
 
