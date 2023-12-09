@@ -1,6 +1,7 @@
 use anyhow::Result;
 use log::*;
 use ratatui::{
+    layout::SegmentSize,
     prelude::*,
     widgets::{Cell, Row, Table},
 };
@@ -20,18 +21,9 @@ where
         rows.push(process_row(state, &mem, proc)?);
     }
 
-    let table = Table::new(rows)
-        .header(Row::new([
-            Cell::from("CPU%"),
-            Cell::from("MEM%"),
-            Cell::from("VIRT"),
-            Cell::from("RES"),
-            Cell::from(Line::from("PID").alignment(Alignment::Right)),
-            Cell::from(Line::from("USER").alignment(Alignment::Right)),
-            Cell::from("S"),
-            Cell::from("Command"),
-        ]))
-        .widths(&[
+    let table = Table::new(
+        rows,
+        &[
             Constraint::Length(4),
             Constraint::Length(4),
             Constraint::Length(5),
@@ -40,9 +32,21 @@ where
             Constraint::Length(8),
             Constraint::Length(1),
             Constraint::Min(20),
-        ])
-        .column_spacing(1)
-        .highlight_symbol(">");
+        ],
+    )
+    .header(Row::new([
+        Cell::from("CPU%"),
+        Cell::from("MEM%"),
+        Cell::from("VIRT"),
+        Cell::from("RES"),
+        Cell::from(Line::from("PID").alignment(Alignment::Right)),
+        Cell::from(Line::from("USER").alignment(Alignment::Right)),
+        Cell::from("S"),
+        Cell::from("Command"),
+    ]))
+    .column_spacing(1)
+    .segment_size(SegmentSize::LastTakesRemainder)
+    .highlight_symbol(">");
     frame.render_widget(table, area);
 
     Ok(())

@@ -6,14 +6,15 @@ use ratatui::{prelude::*, widgets::Paragraph};
 use crate::model::MonitorData;
 
 pub fn render_banner(frame: &mut Frame, state: &dyn MonitorData, area: Rect) -> Result<()> {
-    let layout = Layout::new()
-        .direction(Direction::Horizontal)
-        .constraints([
+    let layout = Layout::new(
+        Direction::Horizontal,
+        [
             Constraint::Ratio(1, 3),
             Constraint::Ratio(1, 3),
             Constraint::Ratio(1, 3),
-        ])
-        .split(area);
+        ],
+    )
+    .split(area);
 
     let host = Paragraph::new(vec![Line::from(vec![
         Span::styled(state.hostname()?, Style::new().bold()),

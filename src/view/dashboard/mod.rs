@@ -33,16 +33,17 @@ pub fn render_dashboard<B>(frame: &mut Frame, state: &MonitorState<B>) -> Result
 where
     B: MonitorBackend,
 {
-    let layout = Layout::new()
-        .direction(Direction::Vertical)
-        .constraints([
+    let layout = Layout::new(
+        Direction::Vertical,
+        [
             Constraint::Length(1),
             Constraint::Length(1),
             Constraint::Length(4),
             Constraint::Length(1),
             Constraint::Min(0),
-        ])
-        .split(frame.size());
+        ],
+    )
+    .split(frame.size());
     render_banner(frame, state, layout[0])?;
 
     let summaries = [

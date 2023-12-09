@@ -31,19 +31,20 @@ impl Meter {
 
 impl Widget for Meter {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        let layout = Layout::new()
-            .direction(Direction::Horizontal)
-            .constraints([
+        let layout = Layout::new(
+            Direction::Horizontal,
+            [
                 Constraint::Length(self.label.len() as u16 + 1),
                 Constraint::Min(8),
-            ])
-            .split(area);
+            ],
+        )
+        .split(area);
         let l = layout[0];
         buf.set_string(l.x, l.y, self.label.as_ref(), Style::new().bold());
 
         let b = layout[1];
-        buf.get_mut(b.x, b.y).symbol = "[".into();
-        buf.get_mut(b.x + b.width - 1, b.y).symbol = "]".into();
+        buf.get_mut(b.x, b.y).set_char('[');
+        buf.get_mut(b.x + b.width - 1, b.y).set_char(']');
 
         let avail_chars = b.width - 2;
         let avail_ticks = avail_chars * 8;
