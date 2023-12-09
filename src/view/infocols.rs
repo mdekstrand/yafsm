@@ -1,0 +1,126 @@
+//! Info columns widget.
+use std::borrow::Cow;
+
+use ratatui::widgets::Widget;
+
+/// Width of values to display.
+///
+/// this is set to include a full percentage like "34.2%"".
+const VAL_WIDTH: u16 = 5;
+/// Max width of labels.
+const LABEL_WIDTH: u16 = 6;
+/// Width of a full column, incl. padding.
+const COL_WIDTH: u16 = 1 + LABEL_WIDTH + 2 + 1 + VAL_WIDTH + 1;
+/// Number of rows to display in a column.
+const COL_ROWS: u16 = 4;
+
+/// Wrapper for value types in info columns that control their display.
+#[derive(Debug, Clone)]
+pub enum ICValue {
+    /// Empty value
+    Blank,
+    /// A string, displayed as-is.
+    Str(Cow<'static, str>),
+    /// A percentage.
+    Pct(f32),
+    /// A byte count.
+    Bytes(u64),
+    /// Count of unspecified units.
+    Count(u64),
+    /// Floating-point value.
+    Value(f32),
+}
+
+/// Mini table-like widget for system information columns.
+pub struct InfoCols {
+    label: Cow<'static, str>,
+    stat: ICValue,
+    entries: Vec<(Cow<'static, str>, ICValue)>,
+}
+
+impl InfoCols {
+    pub fn new<S: Into<Cow<'static, str>>>(self, label: S) -> InfoCols {
+        InfoCols {
+            label: label.into(),
+            stat: ICValue::Blank,
+            entries: Vec::with_capacity(3),
+        }
+    }
+
+    pub fn stat_str<V>(mut self, str: V) -> InfoCols
+    where
+        V: Into<Cow<'static, str>>,
+    {
+        self.stat = ICValue::Str(str.into());
+        self
+    }
+
+    pub fn stat_pct(mut self, pct: f32) -> InfoCols {
+        self.stat = ICValue::Pct(pct);
+        self
+    }
+
+    pub fn stat_bytes(mut self, bytes: u64) -> InfoCols {
+        self.stat = ICValue::Bytes(bytes);
+        self
+    }
+
+    pub fn stat_count(mut self, count: u64) -> InfoCols {
+        self.stat = ICValue::Count(count);
+        self
+    }
+
+    pub fn stat_value(mut self, val: f32) -> InfoCols {
+        self.stat = ICValue::Value(val);
+        self
+    }
+
+    pub fn add_str<S, V>(mut self, label: S, str: V) -> InfoCols
+    where
+        S: Into<Cow<'static, str>>,
+        V: Into<Cow<'static, str>>,
+    {
+        self.entries.push((label.into(), ICValue::Str(str.into())));
+        self
+    }
+
+    pub fn add_pct<S: Into<Cow<'static, str>>>(mut self, label: S, pct: f32) -> InfoCols {
+        self.entries.push((label.into(), ICValue::Pct(pct)));
+        self
+    }
+
+    pub fn add_bytes<S: Into<Cow<'static, str>>>(mut self, label: S, bytes: u64) -> InfoCols {
+        self.entries.push((label.into(), ICValue::Bytes(bytes)));
+        self
+    }
+
+    pub fn add_count<S: Into<Cow<'static, str>>>(mut self, label: S, count: u64) -> InfoCols {
+        self.entries.push((label.into(), ICValue::Count(count)));
+        self
+    }
+
+    pub fn add_value<S: Into<Cow<'static, str>>>(mut self, label: S, val: f32) -> InfoCols {
+        self.entries.push((label.into(), ICValue::Value(val)));
+        self
+    }
+
+    pub fn col_width(&self) -> u16 {
+        COL_WIDTH
+    }
+
+    pub fn num_cols(&self) -> u16 {
+        let mut n = 1;
+        let excess = self.entries.len() as u16 - 3;
+        n += excess / COL_ROWS;
+        if excess % COL_ROWS > 0 {
+            n += 1;
+        }
+        n
+    }
+}
+
+impl Widget for ICValue {
+    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
+        // do nothing
+    }
+}

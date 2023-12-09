@@ -9,6 +9,7 @@ use self::dashboard::render_dashboard;
 
 mod banner;
 mod dashboard;
+mod infocols;
 mod meter;
 mod quicklook;
 mod util;
