@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use anyhow::Result;
 
-use crate::model::{cpu::CPU, memory::Memory, swap::Swap, Options};
+use crate::model::*;
 
 pub mod sysmon;
 
@@ -21,7 +21,10 @@ pub trait MonitorBackend {
     /// Get the system uptime.
     fn uptime(&self) -> Result<Duration>;
 
-    /// Get CPU utilization.
+    /// Get the CPU count.
+    fn cpu_count(&self) -> Result<u32>;
+
+    /// Get overall CPU utilization.
     fn global_cpu(&self) -> Result<CPU>;
 
     /// Get memory usage.
@@ -29,4 +32,7 @@ pub trait MonitorBackend {
 
     /// Get swap usage.
     fn swap(&self) -> Result<Swap>;
+
+    /// Get the system load average.
+    fn load_avg(&self) -> Result<LoadAvg>;
 }

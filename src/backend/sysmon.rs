@@ -42,11 +42,16 @@ impl MonitorBackend for System {
         Ok(Duration::from_secs(SystemExt::uptime(self)))
     }
 
+    fn cpu_count(&self) -> Result<u32> {
+        Ok(self.cpus().len() as u32)
+    }
+
     fn global_cpu(&self) -> Result<CPU> {
         Ok(CPU {
             utilization: self.global_cpu_info().cpu_usage() / 100.0,
         })
     }
+
     fn memory(&self) -> Result<Memory> {
         let used = self.used_memory();
         let total = self.total_memory();
@@ -65,6 +70,15 @@ impl MonitorBackend for System {
             used: self.used_swap(),
             free: self.free_swap(),
             total: self.total_swap(),
+        })
+    }
+
+    fn load_avg(&self) -> Result<LoadAvg> {
+        let la = self.load_average();
+        Ok(LoadAvg {
+            one: la.one as f32,
+            five: la.five as f32,
+            fifteen: la.fifteen as f32,
         })
     }
 }

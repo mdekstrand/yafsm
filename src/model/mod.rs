@@ -4,12 +4,14 @@ use std::time::Duration;
 use anyhow::*;
 
 pub mod cpu;
+mod load;
 pub mod memory;
 pub mod options;
 pub mod source;
 pub mod swap;
 
 pub use cpu::CPU;
+pub use load::LoadAvg;
 pub use memory::Memory;
 pub use options::Options;
 pub use swap::Swap;
@@ -76,6 +78,10 @@ impl<B> SystemResources for MonitorState<B>
 where
     B: MonitorBackend,
 {
+    fn cpu_count(&self) -> Result<u32> {
+        self.backend.cpu_count()
+    }
+
     fn global_cpu(&self) -> Result<CPU> {
         self.backend.global_cpu()
     }

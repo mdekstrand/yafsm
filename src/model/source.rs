@@ -12,6 +12,9 @@ pub trait SystemInfo {
 }
 
 pub trait SystemResources {
+    /// Get the number of CPUs.
+    fn cpu_count(&self) -> Result<u32>;
+
     /// Get CPU utilization.
     fn global_cpu(&self) -> Result<CPU>;
 
