@@ -27,7 +27,7 @@ pub(super) fn render_quicklook(
     frame.render_widget(
         Meter::new("MEM")
             .value(mem.used_frac(), level_color(mem.used_frac()))
-            .value(mem.freeable_frac(), Color::LightCyan),
+            .value(mem.freeable_frac(), Color::Cyan),
         Rect {
             y: area.y + 2,
             height: 1,
