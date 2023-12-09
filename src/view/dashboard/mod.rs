@@ -22,6 +22,7 @@ const QL_MIN: u16 = 20;
 
 enum HeaderBlock {
     Meters(u16),
+    Gutter(u16),
     Summary {
         cols: u16,
         col_size: u16,
@@ -54,6 +55,7 @@ where
     ];
     let mut boxes = Vec::with_capacity(summaries.len() + 1);
     boxes.push(HeaderBlock::Meters(QL_MIN));
+    boxes.push(HeaderBlock::Gutter(1));
     boxes.extend(summaries.iter().map(|(ic, priority)| HeaderBlock::Summary {
         cols: ic.num_cols(),
         col_size: ic.col_width(),
@@ -63,7 +65,7 @@ where
 
     render_quicklook(frame, state, summary_split[0])?;
     for (i, (ic, _)) in summaries.into_iter().enumerate() {
-        frame.render_widget(ic, summary_split[i + 1]);
+        frame.render_widget(ic, summary_split[i + 2]);
     }
 
     render_process_table(frame, state, layout[4])?;
@@ -81,6 +83,7 @@ fn layout_summaries(blocks: &[HeaderBlock], area: Rect) -> Vec<Rect> {
     let mut order: Vec<_> = (0..blocks.len()).collect();
     order.sort_by_key(|i| match blocks[*i] {
         HeaderBlock::Meters(_) => 0,
+        HeaderBlock::Gutter(_) => 0,
         HeaderBlock::Summary { priority, .. } => priority,
     });
 
@@ -90,6 +93,7 @@ fn layout_summaries(blocks: &[HeaderBlock], area: Rect) -> Vec<Rect> {
     for i in &order {
         let width = match blocks[*i] {
             HeaderBlock::Meters(min) => min,
+            HeaderBlock::Gutter(w) => w,
             HeaderBlock::Summary { col_size, .. } => col_size,
         };
         if remaining >= width {
