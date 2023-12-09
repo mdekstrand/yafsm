@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use anyhow::{anyhow, Result};
 use log::*;
-use sysinfo::{CpuExt, CpuRefreshKind, RefreshKind, System, SystemExt};
+use sysinfo::{CpuExt, CpuRefreshKind, PidExt, ProcessExt, RefreshKind, System, SystemExt};
 
 use crate::model::*;
 
@@ -80,5 +80,50 @@ impl MonitorBackend for System {
             five: la.five as f32,
             fifteen: la.fifteen as f32,
         })
+    }
+
+    fn processes<'a>(&'a self) -> Result<Vec<Process<'a>>> {
+        let procs = SystemExt::processes(self);
+        let mut out = Vec::with_capacity(procs.len());
+        for proc in procs.values() {
+            let disk = proc.disk_usage();
+            out.push(Process {
+                pid: proc.pid().as_u32(),
+                ppid: proc.parent().map(|p| p.as_u32()),
+                name: proc.name().into(),
+                exe: proc.exe().into(),
+                uid: proc.user_id().map(|u| **u),
+                status: match proc.status() {
+                    sysinfo::ProcessStatus::Idle => 'I',
+                    sysinfo::ProcessStatus::Run => 'R',
+                    sysinfo::ProcessStatus::Sleep => 'S',
+                    sysinfo::ProcessStatus::Stop => 'T',
+                    sysinfo::ProcessStatus::Zombie => 'Z',
+                    sysinfo::ProcessStatus::Tracing => 'G',
+                    sysinfo::ProcessStatus::Dead => 'D',
+                    sysinfo::ProcessStatus::Wakekill => 'K',
+                    sysinfo::ProcessStatus::Waking => 'W',
+                    sysinfo::ProcessStatus::Parked => 'P',
+                    sysinfo::ProcessStatus::LockBlocked => 'L',
+                    sysinfo::ProcessStatus::UninterruptibleDiskSleep => 'U',
+                    sysinfo::ProcessStatus::Unknown(_) => 'X',
+                },
+                cpu: proc.cpu_usage(),
+                mem_rss: proc.memory(),
+                mem_virt: proc.virtual_memory(),
+                io: if disk.total_read_bytes > 0 {
+                    Some(IOUsage {
+                        tot_read: disk.total_read_bytes,
+                        tot_write: disk.total_written_bytes,
+                        new_read: disk.read_bytes,
+                        new_write: disk.written_bytes,
+                    })
+                } else {
+                    None
+                },
+                wall_time: Duration::from_secs(proc.run_time()),
+            })
+        }
+        Ok(out)
     }
 }

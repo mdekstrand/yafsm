@@ -15,6 +15,7 @@ use crate::model::*;
 enum DumpType {
     Cpu,
     Mem,
+    Procs,
 }
 
 #[derive(Args, Debug)]
@@ -50,6 +51,7 @@ impl DumpOpts {
             match dump {
                 DumpType::Cpu => self.dump_cpu(state)?,
                 DumpType::Mem => self.dump_memory(state)?,
+                DumpType::Procs => self.dump_processes(state)?,
             }
         }
 
@@ -70,6 +72,15 @@ impl DumpOpts {
         println!("MEM: {} / {} used", bytes(mem.used), bytes(mem.total));
         println!("SWP: {} / {} used", bytes(swap.used), bytes(swap.total));
 
+        Ok(())
+    }
+
+    fn dump_processes(&self, state: &dyn MonitorData) -> Result<()> {
+        let procs = state.processes()?;
+        info!("dumping {} processes", procs.len());
+        for proc in procs {
+            println!("{:?}", proc);
+        }
         Ok(())
     }
 }

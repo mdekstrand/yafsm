@@ -27,3 +27,8 @@ pub trait SystemResources {
     /// Get the system load average.
     fn load_avg(&self) -> Result<LoadAvg>;
 }
+
+pub trait RunningProcesses {
+    /// Get the running processes.
+    fn processes<'a>(&'a self) -> Result<Vec<Process<'a>>>;
+}

@@ -4,28 +4,32 @@ use std::time::Duration;
 use anyhow::*;
 
 pub mod cpu;
-mod load;
+pub mod io;
+pub mod load;
 pub mod memory;
 pub mod options;
+pub mod process;
 pub mod source;
 pub mod swap;
 
 pub use cpu::CPU;
+pub use io::IOUsage;
 pub use load::LoadAvg;
 pub use memory::Memory;
 pub use options::Options;
+pub use process::Process;
 pub use swap::Swap;
 
 use crate::backend::MonitorBackend;
 
-use self::source::{SystemInfo, SystemResources};
+use self::source::{RunningProcesses, SystemInfo, SystemResources};
 
 /// Interface for data monitor sources.
 ///
 /// This is defined as a trait so the monitor state can be object-safe, where that might
 /// be helpful.  It also has methods that are somewhat duplicative of [MonitorBackend],
 /// but many of them handle checking whether that feature should be enabled.
-pub trait MonitorData: SystemInfo + SystemResources {
+pub trait MonitorData: SystemInfo + SystemResources + RunningProcesses {
     fn backend(&self) -> &dyn MonitorBackend;
 }
 
@@ -96,5 +100,14 @@ where
 
     fn load_avg(&self) -> Result<LoadAvg> {
         self.backend.load_avg()
+    }
+}
+
+impl<B> RunningProcesses for MonitorState<B>
+where
+    B: MonitorBackend,
+{
+    fn processes<'a>(&'a self) -> Result<Vec<Process<'a>>> {
+        self.backend.processes()
     }
 }

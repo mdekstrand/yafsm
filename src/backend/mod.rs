@@ -35,4 +35,7 @@ pub trait MonitorBackend {
 
     /// Get the system load average.
     fn load_avg(&self) -> Result<LoadAvg>;
+
+    /// Get the running processes.
+    fn processes<'a>(&'a self) -> Result<Vec<Process<'a>>>;
 }
