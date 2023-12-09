@@ -1,4 +1,5 @@
 use anyhow::Result;
+use chrono::{DateTime, Local};
 use friendly::duration;
 use ratatui::{prelude::*, widgets::Paragraph};
 
@@ -19,6 +20,12 @@ pub(super) fn render_banner(frame: &mut Frame, state: &dyn MonitorData, area: Re
         Span::raw(format!(" ({})", state.system_version()?)),
     ])])
     .alignment(Alignment::Left);
+    let time = Local::now();
+    let time = Paragraph::new(vec![Line::from(
+        time.format("%b %e, %Y %H:%M:%S").to_string(),
+    )])
+    .alignment(Alignment::Center);
+
     let uptime = Paragraph::new(vec![Line::from(format!(
         "Uptime: {}",
         duration(state.uptime()?)
@@ -26,6 +33,7 @@ pub(super) fn render_banner(frame: &mut Frame, state: &dyn MonitorData, area: Re
     .alignment(Alignment::Right);
 
     frame.render_widget(host, layout[0]);
+    frame.render_widget(time, layout[1]);
     frame.render_widget(uptime, layout[2]);
 
     Ok(())
