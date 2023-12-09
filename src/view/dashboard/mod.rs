@@ -5,15 +5,18 @@ use std::cmp::min;
 use anyhow::Result;
 use ratatui::prelude::*;
 
-pub mod banner;
-pub mod quicklook;
-pub mod summaries;
+mod banner;
+mod process_table;
+mod quicklook;
+mod summaries;
 
 use banner::render_banner;
 use quicklook::render_quicklook;
 use summaries::*;
 
 use crate::{backend::MonitorBackend, model::MonitorState};
+
+use self::process_table::render_process_table;
 
 const QL_MIN: u16 = 20;
 
@@ -35,7 +38,8 @@ where
         .constraints([
             Constraint::Length(1),
             Constraint::Length(1),
-            Constraint::Min(3),
+            Constraint::Length(4),
+            Constraint::Length(1),
             Constraint::Min(0),
         ])
         .split(frame.size());
@@ -60,6 +64,8 @@ where
     for (i, (ic, _)) in summaries.into_iter().enumerate() {
         frame.render_widget(ic, summary_split[i + 1]);
     }
+
+    render_process_table(frame, state, layout[4])?;
 
     Ok(())
 }

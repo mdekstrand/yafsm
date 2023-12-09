@@ -2,6 +2,7 @@
 use std::time::Duration;
 
 use anyhow::*;
+use uzers::{Users, UsersCache};
 
 pub mod cpu;
 pub mod io;
@@ -19,11 +20,10 @@ pub use memory::Memory;
 pub use options::Options;
 pub use process::Process;
 pub use swap::Swap;
-use uzers::{Users, UsersCache};
 
 use crate::backend::MonitorBackend;
 
-use self::source::{RunningProcesses, SystemInfo, SystemResources};
+pub use self::source::{RunningProcesses, SystemInfo, SystemResources};
 
 /// Interface for data monitor sources.
 ///

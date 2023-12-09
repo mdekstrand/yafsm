@@ -9,6 +9,7 @@ pub struct Process<'a> {
     pub ppid: Option<u32>,
     pub name: Cow<'a, str>,
     pub exe: Cow<'a, Path>,
+    pub cmd: Cow<'a, [String]>,
     pub uid: Option<u32>,
 
     pub status: char,

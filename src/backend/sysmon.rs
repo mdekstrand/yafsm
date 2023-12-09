@@ -4,7 +4,9 @@ use std::time::Duration;
 
 use anyhow::{anyhow, Result};
 use log::*;
-use sysinfo::{CpuExt, CpuRefreshKind, PidExt, ProcessExt, RefreshKind, System, SystemExt};
+use sysinfo::{
+    CpuExt, CpuRefreshKind, PidExt, ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt,
+};
 
 use crate::model::*;
 
@@ -21,7 +23,8 @@ impl MonitorBackend for System {
         debug!("refreshing system");
         let specs = RefreshKind::new()
             .with_cpu(CpuRefreshKind::everything())
-            .with_memory();
+            .with_memory()
+            .with_processes(ProcessRefreshKind::everything());
         self.refresh_specifics(specs);
         Ok(())
     }
@@ -92,6 +95,7 @@ impl MonitorBackend for System {
                 ppid: proc.parent().map(|p| p.as_u32()),
                 name: proc.name().into(),
                 exe: proc.exe().into(),
+                cmd: proc.cmd().into(),
                 uid: proc.user_id().map(|u| **u),
                 status: match proc.status() {
                     sysinfo::ProcessStatus::Idle => 'I',
