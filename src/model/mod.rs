@@ -21,7 +21,8 @@ use self::source::{SystemInfo, SystemResources};
 /// Interface for data monitor sources.
 ///
 /// This is defined as a trait so the monitor state can be object-safe, where that might
-/// be helpful.
+/// be helpful.  It also has methods that are somewhat duplicative of [MonitorBackend],
+/// but many of them handle checking whether that feature should be enabled.
 pub trait MonitorData: SystemInfo + SystemResources {
     fn backend(&self) -> &dyn MonitorBackend;
 }
