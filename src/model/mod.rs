@@ -3,8 +3,6 @@ use std::time::Duration;
 
 use anyhow::*;
 
-use crate::backend::sysmon::initialize;
-
 pub mod cpu;
 pub mod memory;
 pub mod options;
@@ -39,8 +37,6 @@ where
     B: MonitorBackend,
 {
     pub fn create(options: Options, backend: B) -> Result<MonitorState<B>> {
-        let mut system = initialize()?;
-
         Ok(MonitorState { options, backend })
     }
 

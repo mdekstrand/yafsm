@@ -1,9 +1,6 @@
-use std::time::Duration;
-
 use anyhow::Result;
 use friendly::duration;
 use ratatui::{prelude::*, widgets::Paragraph};
-use sysinfo::SystemExt;
 
 use crate::model::MonitorData;
 

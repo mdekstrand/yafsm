@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use anyhow::Result;
 use clap::{Args, ValueEnum};
-use friendly::{bytes, scalar};
+use friendly::bytes;
 use log::*;
 
 use crate::backend::MonitorBackend;
