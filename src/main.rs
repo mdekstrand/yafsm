@@ -52,7 +52,7 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
-    with_terminal(|term| run_event_loop(term, &mut state))?;
+    with_terminal(move |term| run_event_loop(term, &mut state))?;
 
     Ok(())
 }
