@@ -54,6 +54,7 @@ impl Widget for Meter {
             let ent = &self.values[i];
             trace!("{}: {} (pre_w {})", self.label.as_ref(), ent.value, pre_w);
             let bw = (avail_ticks as f32 * ent.value).round() as u32;
+            trace!("using {} of {} ticks", bw, avail_ticks);
             if bw <= pre_w {
                 pre_w = 0;
                 continue;
@@ -71,7 +72,10 @@ impl Widget for Meter {
             }
 
             let mut style = Style::new().fg(ent.color);
-            if partial > 0 && i + 1 < self.values.len() {
+            if partial > 0
+                && i + 1 < self.values.len()
+                && self.values[i + 1].value * avail_ticks as f32 >= 1.0
+            {
                 style = style.bg(self.values[i + 1].color);
             }
             buf.set_string(b.x + 1 + pos, b.y, &bar, style);

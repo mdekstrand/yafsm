@@ -44,7 +44,7 @@ impl MonitorBackend for System {
 
     fn global_cpu(&self) -> Result<CPU> {
         Ok(CPU {
-            utilization: self.global_cpu_info().cpu_usage(),
+            utilization: self.global_cpu_info().cpu_usage() / 100.0,
         })
     }
     fn memory(&self) -> Result<Memory> {
