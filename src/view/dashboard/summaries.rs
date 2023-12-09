@@ -14,7 +14,7 @@ pub fn memory_summary(state: &dyn MonitorData) -> Result<InfoCols> {
         .add_pct("MEM", mem.used_frac() * 100.0)
         .add_bytes("total", mem.total)
         .add_bytes("used", mem.used)
-        .add_bytes("free", mem.free))
+        .add_bytes("avail", mem.free + mem.freeable))
 }
 
 pub fn swap_summary(state: &dyn MonitorData) -> Result<InfoCols> {
