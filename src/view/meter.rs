@@ -52,9 +52,15 @@ impl Widget for Meter {
 
         for i in 0..self.values.len() {
             let ent = &self.values[i];
-            trace!("{}: {} (pre_w {})", self.label.as_ref(), ent.value, pre_w);
+            trace!(
+                "{}{}: {} (pre_w {})",
+                self.label.as_ref(),
+                i,
+                ent.value,
+                pre_w
+            );
             let bw = (avail_ticks as f32 * ent.value).round() as u32;
-            trace!("using {} of {} ticks", bw, avail_ticks);
+            trace!("{}{}: using {} of {} ticks", self.label, i, bw, avail_ticks);
             if bw <= pre_w {
                 pre_w = 0;
                 continue;
@@ -78,6 +84,7 @@ impl Widget for Meter {
             {
                 style = style.bg(self.values[i + 1].color);
             }
+            trace!("{}{}: writing {} characters", self.label, i, bar.len());
             buf.set_string(b.x + 1 + pos, b.y, &bar, style);
             pos += bar.len() as u16;
         }
