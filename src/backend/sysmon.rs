@@ -112,7 +112,7 @@ impl MonitorBackend for System {
                     sysinfo::ProcessStatus::UninterruptibleDiskSleep => 'U',
                     sysinfo::ProcessStatus::Unknown(_) => 'X',
                 },
-                cpu: proc.cpu_usage(),
+                cpu: proc.cpu_usage() / 100.0,
                 mem_rss: proc.memory(),
                 mem_virt: proc.virtual_memory(),
                 io: if disk.total_read_bytes > 0 {

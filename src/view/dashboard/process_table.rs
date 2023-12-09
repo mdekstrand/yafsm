@@ -12,7 +12,8 @@ where
     B: MonitorBackend,
 {
     let mem = state.memory()?;
-    let procs = state.processes()?;
+    let mut procs = state.processes()?;
+    procs.sort_by(|p1, p2| p2.cpu.total_cmp(&p1.cpu));
     debug!("proctbl: rendering {} processes in {:?}", procs.len(), area);
     let mut rows = Vec::with_capacity(procs.len());
     for proc in &procs {
@@ -38,7 +39,7 @@ where
             Constraint::Length(6),
             Constraint::Length(8),
             Constraint::Length(1),
-            Constraint::Min(5),
+            Constraint::Min(20),
         ])
         .column_spacing(1)
         .highlight_symbol(">");
