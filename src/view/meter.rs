@@ -86,7 +86,7 @@ impl Widget for Meter {
             }
             trace!("{}{}: writing {} characters", self.label, i, bar.len());
             buf.set_string(b.x + 1 + pos, b.y, &bar, style);
-            pos += bar.len() as u16;
+            pos += bar.chars().count() as u16;
         }
     }
 }
