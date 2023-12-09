@@ -1,36 +1,31 @@
 //! Horizontal bar meter widget.
 use std::borrow::Cow;
-use std::cmp::min;
 
+use log::*;
 use ratatui::prelude::*;
 use ratatui::widgets::Widget;
 
-// Note: Unicode bars start at U+2588 (full bar).
+struct MeterValue {
+    value: f32,
+    color: Color,
+}
 
 pub struct Meter {
     label: Cow<'static, str>,
-    value: f32,
-    second_value: Option<f32>,
+    values: Vec<MeterValue>,
 }
 
 impl Meter {
     pub fn new<S: Into<Cow<'static, str>>>(label: S) -> Meter {
         Meter {
             label: label.into(),
-            value: f32::NAN,
-            second_value: None,
+            values: Vec::new(),
         }
     }
 
-    pub fn value(self, value: f32) -> Meter {
-        Meter { value, ..self }
-    }
-
-    pub fn second_value(self, sv: f32) -> Meter {
-        Meter {
-            second_value: Some(sv),
-            ..self
-        }
+    pub fn value(mut self, value: f32, color: Color) -> Meter {
+        self.values.push(MeterValue { value, color });
+        self
     }
 }
 
@@ -44,82 +39,43 @@ impl Widget for Meter {
             ])
             .split(area);
         let l = layout[0];
-        buf.set_string(l.x, l.y, self.label, Style::new().bold());
+        buf.set_string(l.x, l.y, self.label.as_ref(), Style::new().bold());
 
         let b = layout[1];
         buf.get_mut(b.x, b.y).symbol = "[".into();
         buf.get_mut(b.x + b.width - 1, b.y).symbol = "]".into();
 
-        let txt = format!("{:.1}%", self.value * 100.0);
-        let color = if self.value >= 0.8 {
-            Color::Red
-        } else if self.value >= 0.6 {
-            Color::Yellow
-        } else {
-            Color::Green
-        };
+        let avail_chars = b.width - 2;
+        let avail_ticks = avail_chars * 8;
+        let mut pre_w = 0;
+        let mut pos = 0;
 
-        let space = b.width - 2;
-        let bw = (space * 8) as f32 * self.value;
-        let bw = bw.floor() as u32;
-        let blocks = bw / 8;
-        let partial = bw % 8;
-        let tlen = txt.len() as u32;
-        let bmax = space as u32 - tlen;
-        let svbs = self
-            .second_value
-            .map(|f| ((space * 8) as f32 * f).floor() as u32);
-
-        let nfull = min(blocks, bmax);
-        let mut bar = "\u{2588}".repeat(nfull as usize);
-        if blocks < bmax && partial > 0 {
-            bar.push(char::from_u32(0x2588 + 8 - partial).expect("invalid block char"));
-        }
-        buf.set_string(b.x + 1, b.y, &bar, Style::new().fg(color));
-
-        if let Some(svbs) = svbs {
-            buf.set_style(
-                Rect {
-                    x: b.x + 1 + nfull as u16,
-                    y: b.y,
-                    width: 1,
-                    height: 1,
-                },
-                Style::new().fg(color).bg(Color::Cyan),
-            );
-            if svbs > partial {
-                let sblocks = (svbs - partial) / 8;
-                let send = (svbs - partial) % 8;
-                let mut sbar = "\u{2588}".repeat(sblocks as usize);
-                if send > 0 {
-                    sbar.push(char::from_u32(0x2588 + 8 - send).expect("invalid block char"));
-                }
-                buf.set_string(
-                    b.x + 2 + min(blocks, bmax) as u16,
-                    b.y,
-                    &sbar,
-                    Style::new().fg(Color::Cyan),
-                );
+        for i in 0..self.values.len() {
+            let ent = &self.values[i];
+            trace!("{}: {} (pre_w {})", self.label.as_ref(), ent.value, pre_w);
+            let bw = (avail_ticks as f32 * ent.value).floor() as u32;
+            if bw <= pre_w {
+                pre_w = 0;
+                continue;
             }
-        }
 
-        buf.set_string(
-            b.x + 1 + space - tlen as u16,
-            b.y,
-            &txt,
-            Style::new().fg(color),
-        );
-        if blocks > bmax {
-            let tbw = blocks - bmax;
-            buf.set_style(
-                Rect {
-                    x: bmax as u16,
-                    y: b.y,
-                    width: tbw as u16,
-                    height: 1,
-                },
-                Style::new().fg(Color::White).bg(color),
-            );
+            let blocks = bw / 8;
+            let partial = bw % 8;
+
+            let mut bar = "\u{2588}".repeat(blocks as usize);
+            if partial > 0 {
+                bar.push(char::from_u32(0x2588 + 8 - partial).expect("invalid block char"));
+                pre_w = 8 - partial;
+            } else {
+                pre_w = 0;
+            }
+
+            let mut style = Style::new().fg(ent.color);
+            if partial > 0 && i + 1 < self.values.len() {
+                style = style.bg(self.values[i + 1].color);
+            }
+            buf.set_string(b.x + 1 + pos, b.y, &bar, style);
+            pos += bar.len() as u16;
         }
     }
 }

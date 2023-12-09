@@ -10,6 +10,7 @@ use self::{banner::render_banner, quicklook::render_quicklook};
 mod banner;
 mod meter;
 mod quicklook;
+mod util;
 
 pub fn render_screen<B>(frame: &mut Frame, state: &MonitorState<B>) -> Result<()>
 where
