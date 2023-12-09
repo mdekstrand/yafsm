@@ -5,8 +5,8 @@ use ratatui::prelude::*;
 
 use crate::{backend::MonitorBackend, model::MonitorState};
 
-use super::banner::render_banner;
-use super::quicklook::render_quicklook;
+use super::displays::banner::render_banner;
+use super::displays::quicklook::render_quicklook;
 
 pub fn render_dashboard<B>(frame: &mut Frame, state: &MonitorState<B>) -> Result<()>
 where

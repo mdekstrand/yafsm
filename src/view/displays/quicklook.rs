@@ -5,14 +5,10 @@ use ratatui::prelude::*;
 
 use crate::model::MonitorData;
 
-use super::meter::Meter;
-use super::util::level_color;
+use crate::view::util::level_color;
+use crate::view::widgets::meter::Meter;
 
-pub(super) fn render_quicklook(
-    frame: &mut Frame,
-    state: &dyn MonitorData,
-    area: Rect,
-) -> Result<()> {
+pub fn render_quicklook(frame: &mut Frame, state: &dyn MonitorData, area: Rect) -> Result<()> {
     let cpu = state.global_cpu()?;
     let mem = state.memory()?;
     let swap = state.swap()?;

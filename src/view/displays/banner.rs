@@ -5,7 +5,7 @@ use ratatui::{prelude::*, widgets::Paragraph};
 
 use crate::model::MonitorData;
 
-pub(super) fn render_banner(frame: &mut Frame, state: &dyn MonitorData, area: Rect) -> Result<()> {
+pub fn render_banner(frame: &mut Frame, state: &dyn MonitorData, area: Rect) -> Result<()> {
     let layout = Layout::new()
         .direction(Direction::Horizontal)
         .constraints([
