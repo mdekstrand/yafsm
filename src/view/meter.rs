@@ -53,7 +53,7 @@ impl Widget for Meter {
         for i in 0..self.values.len() {
             let ent = &self.values[i];
             trace!("{}: {} (pre_w {})", self.label.as_ref(), ent.value, pre_w);
-            let bw = (avail_ticks as f32 * ent.value).floor() as u32;
+            let bw = (avail_ticks as f32 * ent.value).round() as u32;
             if bw <= pre_w {
                 pre_w = 0;
                 continue;
