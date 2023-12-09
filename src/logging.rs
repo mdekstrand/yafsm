@@ -6,12 +6,14 @@ use anyhow::Result;
 use fern::Dispatch;
 use log::LevelFilter;
 
-pub fn initialize<P: AsRef<Path>>(file: Option<P>, term: bool, debug: bool) -> Result<()> {
-    let mut log = Dispatch::new()
-        .level(LevelFilter::Debug)
-        .format(|out, msg, rec| {
-            out.finish(format_args!("[{}] {}", rec.level(), msg));
-        });
+pub fn initialize<P: AsRef<Path>>(
+    file: Option<P>,
+    term_filter: Option<LevelFilter>,
+    file_filter: LevelFilter,
+) -> Result<()> {
+    let mut log = Dispatch::new().level(file_filter).format(|out, msg, rec| {
+        out.finish(format_args!("[{}] {}", rec.level(), msg));
+    });
     if let Some(path) = file {
         let f = File::options()
             .write(true)
@@ -21,12 +23,7 @@ pub fn initialize<P: AsRef<Path>>(file: Option<P>, term: bool, debug: bool) -> R
         log = log.chain(f);
     }
 
-    if term {
-        let level = if debug {
-            LevelFilter::Debug
-        } else {
-            LevelFilter::Info
-        };
+    if let Some(level) = term_filter {
         log = log.chain(Dispatch::new().level(level).chain(stderr()));
     }
     log.apply()?;

@@ -2,7 +2,8 @@ use std::{path::PathBuf, time::Duration};
 
 use anyhow::Result;
 use backend::sysmon;
-use clap::Parser;
+use clap::{ArgAction, Parser};
+use log::*;
 
 mod backend;
 mod dump;
@@ -25,8 +26,8 @@ struct CLIOptions {
     #[arg(long = "log-file")]
     log_file: Option<PathBuf>,
     /// Enable debug log messages.
-    #[arg(long = "debug")]
-    debug: bool,
+    #[arg(long = "debug", action=ArgAction::Count)]
+    debug: u8,
 
     /// Refresh period (in seconds).
     #[arg(short = 'r', long = "refresh", default_value = "2.5")]
@@ -38,7 +39,21 @@ struct CLIOptions {
 
 fn main() -> Result<()> {
     let cli = CLIOptions::parse();
-    logging::initialize(cli.log_file.as_ref(), cli.dump.requested(), cli.debug)?;
+    logging::initialize(
+        cli.log_file.as_ref(),
+        if cli.dump.requested() {
+            Some(LevelFilter::Info)
+        } else {
+            None
+        },
+        if cli.debug > 1 {
+            LevelFilter::Trace
+        } else if cli.debug > 0 {
+            LevelFilter::Debug
+        } else {
+            LevelFilter::Info
+        },
+    )?;
 
     let mut options = Options::default();
     options.refresh = Duration::from_secs_f32(cli.refresh);
