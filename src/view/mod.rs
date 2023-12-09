@@ -7,8 +7,8 @@ use crate::{backend::MonitorBackend, MonitorState};
 
 use self::dashboard::render_dashboard;
 
+mod bin1c;
 mod dashboard;
-mod displays;
 mod util;
 mod widgets;
 

@@ -93,4 +93,8 @@ where
     fn swap(&self) -> Result<Swap> {
         self.backend.swap()
     }
+
+    fn load_avg(&self) -> Result<LoadAvg> {
+        self.backend.load_avg()
+    }
 }

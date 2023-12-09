@@ -23,4 +23,7 @@ pub trait SystemResources {
 
     /// Get swap usage.
     fn swap(&self) -> Result<Swap>;
+
+    /// Get the system load average.
+    fn load_avg(&self) -> Result<LoadAvg>;
 }

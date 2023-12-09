@@ -1,7 +1,11 @@
 //! Info columns widget.
-use std::borrow::Cow;
+use std::{borrow::Cow, cmp::min};
 
+use friendly::{scalar, scale::Decimal};
+use ratatui::prelude::*;
 use ratatui::widgets::Widget;
+
+use crate::view::util::{fmt_bytes, fmt_si_val, level_color};
 
 /// Width of values to display.
 ///
@@ -33,46 +37,14 @@ pub enum ICValue {
 
 /// Mini table-like widget for system information columns.
 pub struct InfoCols {
-    label: Cow<'static, str>,
-    stat: ICValue,
     entries: Vec<(Cow<'static, str>, ICValue)>,
 }
 
 impl InfoCols {
-    pub fn new<S: Into<Cow<'static, str>>>(self, label: S) -> InfoCols {
+    pub fn new() -> InfoCols {
         InfoCols {
-            label: label.into(),
-            stat: ICValue::Blank,
             entries: Vec::with_capacity(3),
         }
-    }
-
-    pub fn stat_str<V>(mut self, str: V) -> InfoCols
-    where
-        V: Into<Cow<'static, str>>,
-    {
-        self.stat = ICValue::Str(str.into());
-        self
-    }
-
-    pub fn stat_pct(mut self, pct: f32) -> InfoCols {
-        self.stat = ICValue::Pct(pct);
-        self
-    }
-
-    pub fn stat_bytes(mut self, bytes: u64) -> InfoCols {
-        self.stat = ICValue::Bytes(bytes);
-        self
-    }
-
-    pub fn stat_count(mut self, count: u64) -> InfoCols {
-        self.stat = ICValue::Count(count);
-        self
-    }
-
-    pub fn stat_value(mut self, val: f32) -> InfoCols {
-        self.stat = ICValue::Value(val);
-        self
     }
 
     pub fn add_str<S, V>(mut self, label: S, str: V) -> InfoCols
@@ -109,18 +81,86 @@ impl InfoCols {
     }
 
     pub fn num_cols(&self) -> u16 {
-        let mut n = 1;
-        let excess = self.entries.len() as u16 - 3;
-        n += excess / COL_ROWS;
-        if excess % COL_ROWS > 0 {
+        let mut n = 0;
+        n += self.entries.len() as u16 / COL_ROWS;
+        if self.entries.len() as u16 % COL_ROWS > 0 {
             n += 1;
         }
         n
     }
 }
 
-impl Widget for ICValue {
-    fn render(self, area: ratatui::prelude::Rect, buf: &mut ratatui::prelude::Buffer) {
-        // do nothing
+impl Widget for InfoCols {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        if area.width < COL_WIDTH {
+            // not wide enough to render
+            return;
+        }
+
+        let mut row = 0;
+        let mut col = 0;
+        for (label, value) in self.entries {
+            let x = area.x + col * COL_WIDTH;
+            let y = area.y + row;
+
+            let mut l_style = Style::new();
+            let v_str = value.format();
+            let mut v_style = value.style();
+
+            if row == 0 && col == 0 {
+                l_style = l_style.bold();
+                v_style = v_style.bold();
+            }
+
+            buf.set_stringn(x + 1, y, label, LABEL_WIDTH as usize, l_style);
+            buf.set_stringn(
+                // compute the position to right-align the display
+                // value formats use ASCII chars, so we can use len()
+                x + 1 + LABEL_WIDTH + 2 + 1 + (VAL_WIDTH - min(v_str.len() as u16, VAL_WIDTH)),
+                y,
+                v_str,
+                LABEL_WIDTH as usize,
+                v_style,
+            );
+
+            // done drawing — set up position for next entry
+            if row == COL_ROWS {
+                if area.width < (col + 1) * COL_WIDTH {
+                    col += 1;
+                    row = 0;
+                } else {
+                    // not enough room for another column
+                    break;
+                }
+            } else {
+                row += 1;
+            }
+        }
+    }
+}
+
+impl ICValue {
+    fn format(&self) -> Cow<'static, str> {
+        match self {
+            ICValue::Blank => "".into(),
+            ICValue::Str(s) => s.clone(),
+            ICValue::Pct(p) if *p < 10.0 => format!("{:4.2}%", p).into(),
+            ICValue::Pct(p) if *p > 99.95 => format!("{:.0}%", p.round()).into(),
+            ICValue::Pct(p) => format!("{:4.1}%", p).into(),
+            ICValue::Bytes(b) => fmt_bytes(*b).into(),
+            ICValue::Count(c) => fmt_si_val(*c).into(),
+            ICValue::Value(v) => scalar(*v)
+                .scale(Decimal::UNIT)
+                .sig_figs(4)
+                .to_string()
+                .into(),
+        }
+    }
+
+    fn style(&self) -> Style {
+        match self {
+            ICValue::Pct(p) => Style::new().fg(level_color(p / 100.0)),
+            _ => Style::new(),
+        }
     }
 }
