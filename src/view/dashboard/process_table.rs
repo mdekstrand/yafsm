@@ -95,10 +95,9 @@ where
     B: MonitorBackend,
 {
     debug!("proctbl: rendering {} processes in {:?}", procs.len(), area);
-    let mem = state.memory()?;
     let mut rows = Vec::with_capacity(procs.len());
     for proc in procs.iter() {
-        rows.push(process_row(state, &mem, proc)?);
+        rows.push(process_row(state, proc)?);
     }
 
     let widths = COLUMNS.map(|(_, w, _, _)| {
@@ -124,17 +123,14 @@ where
     Ok(())
 }
 
-fn process_row<'a, B>(state: &MonitorState<B>, mem: &Memory, proc: &Process) -> Result<Row<'a>>
+fn process_row<'a, B>(state: &MonitorState<B>, proc: &Process) -> Result<Row<'a>>
 where
     B: MonitorBackend,
 {
     let cmd = state.process_details(proc.pid).ok();
     Ok(Row::new([
         Cell::from(format!("{:.1}", proc.cpu_util * 100.0)),
-        Cell::from(format!(
-            "{:.1}",
-            proc.mem_rss as f32 * 100.0 / mem.total as f32
-        )),
+        Cell::from(format!("{:.1}", proc.mem_util * 100.0)),
         Cell::from(fmt_bytes(proc.mem_virt)),
         Cell::from(fmt_bytes(proc.mem_rss)),
         Cell::from(Line::from(format!("{}", proc.pid)).alignment(Alignment::Right)),
