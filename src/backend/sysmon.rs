@@ -113,6 +113,7 @@ impl MonitorBackend for System {
                     sysinfo::ProcessStatus::Unknown(_) => '?',
                 },
                 cpu_util: proc.cpu_usage() / 100.0,
+                cpu_time: None,
                 cpu_utime: None,
                 cpu_stime: None,
                 mem_rss: proc.memory(),

@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use friendly::{
     quantity::QVal,
     scale::{Prefix, PrefixFamily},
@@ -14,6 +16,15 @@ pub fn level_color(v: f32) -> Color {
         Color::Magenta
     } else {
         Color::Green
+    }
+}
+
+pub fn fmt_duration(dur: Duration) -> String {
+    let secs = dur.as_secs();
+    if secs < 3600 {
+        format!("{}:{:02}", secs / 60, secs % 60)
+    } else {
+        format!("{}h{}:{:02}", secs / 3600, secs / 60 % 60, secs % 60)
     }
 }
 

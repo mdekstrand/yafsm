@@ -9,7 +9,7 @@ use ratatui::{
 use crate::{
     backend::MonitorBackend,
     model::*,
-    view::util::{fmt_bytes, fmt_int_bytes},
+    view::util::{fmt_bytes, fmt_duration, fmt_int_bytes},
 };
 
 pub fn render_process_table<B>(frame: &mut Frame, state: &MonitorState<B>, area: Rect) -> Result<()>
@@ -34,6 +34,7 @@ where
             Constraint::Length(5),
             Constraint::Length(6),
             Constraint::Length(8),
+            Constraint::Length(5),
             Constraint::Length(1),
             Constraint::Length(5),
             Constraint::Length(5),
@@ -47,6 +48,7 @@ where
         Cell::from("RES"),
         Cell::from(Line::from("PID").alignment(Alignment::Right)),
         Cell::from(Line::from("USER").alignment(Alignment::Right)),
+        Cell::from(Line::from("TIME").alignment(Alignment::Right)),
         Cell::from("S"),
         Cell::from(Line::from("R/s").alignment(Alignment::Right)),
         Cell::from(Line::from("W/s").alignment(Alignment::Right)),
@@ -83,6 +85,10 @@ where
                     .unwrap_or("??".into()),
             )
             .alignment(Alignment::Right),
+        ),
+        Cell::from(
+            Line::from(proc.cpu_time.map(fmt_duration).unwrap_or_default())
+                .alignment(Alignment::Right),
         ),
         Cell::from(proc.status.to_string()),
         Cell::from(
