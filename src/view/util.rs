@@ -1,4 +1,8 @@
-use friendly::{quantity::QVal, Quantity};
+use friendly::{
+    quantity::QVal,
+    scale::{Prefix, PrefixFamily},
+    Quantity,
+};
 use ratatui::style::Color;
 
 use super::bin1c::Bin1C;
@@ -18,6 +22,11 @@ pub fn fmt_bytes<Q: QVal>(bytes: Q) -> String {
         .sig_figs(3)
         .space(false)
         .to_string()
+}
+
+pub fn fmt_int_bytes<Q: QVal>(bytes: Q) -> String {
+    let (b, p) = Bin1C::autoscale(bytes.as_float());
+    format!("{:.0}{}", b, p.label())
 }
 
 pub fn fmt_si_val<Q: QVal>(val: Q) -> String {

@@ -6,7 +6,11 @@ use ratatui::{
     widgets::{Cell, Row, Table},
 };
 
-use crate::{backend::MonitorBackend, model::*, view::util::fmt_bytes};
+use crate::{
+    backend::MonitorBackend,
+    model::*,
+    view::util::{fmt_bytes, fmt_int_bytes},
+};
 
 pub fn render_process_table<B>(frame: &mut Frame, state: &MonitorState<B>, area: Rect) -> Result<()>
 where
@@ -31,6 +35,8 @@ where
             Constraint::Length(6),
             Constraint::Length(8),
             Constraint::Length(1),
+            Constraint::Length(5),
+            Constraint::Length(5),
             Constraint::Min(20),
         ],
     )
@@ -42,6 +48,8 @@ where
         Cell::from(Line::from("PID").alignment(Alignment::Right)),
         Cell::from(Line::from("USER").alignment(Alignment::Right)),
         Cell::from("S"),
+        Cell::from(Line::from("R/s").alignment(Alignment::Right)),
+        Cell::from(Line::from("W/s").alignment(Alignment::Right)),
         Cell::from("Command"),
     ]))
     .column_spacing(1)
@@ -56,6 +64,7 @@ fn process_row<'a, B>(state: &MonitorState<B>, mem: &Memory, proc: &Process<'a>)
 where
     B: MonitorBackend,
 {
+    let io = proc.io.as_ref();
     Ok(Row::new([
         Cell::from(format!("{:.1}", proc.cpu * 100.0)),
         Cell::from(format!(
@@ -76,6 +85,17 @@ where
             .alignment(Alignment::Right),
         ),
         Cell::from(proc.status.to_string()),
+        Cell::from(
+            Line::from(io.map(|io| fmt_int_bytes(io.new_read)).unwrap_or("".into()))
+                .alignment(Alignment::Right),
+        ),
+        Cell::from(
+            Line::from(
+                io.map(|io| fmt_int_bytes(io.new_write))
+                    .unwrap_or("".into()),
+            )
+            .alignment(Alignment::Right),
+        ),
         Cell::from(proc.cmd.join(" ")),
     ]))
 }
