@@ -5,7 +5,6 @@ use anyhow::*;
 use uzers::{Users, UsersCache};
 
 pub mod cpu;
-pub mod io;
 pub mod load;
 pub mod memory;
 pub mod options;
@@ -14,11 +13,10 @@ pub mod source;
 pub mod swap;
 
 pub use cpu::CPU;
-pub use io::IOUsage;
 pub use load::LoadAvg;
 pub use memory::Memory;
 pub use options::Options;
-pub use process::Process;
+pub use process::{Process, ProcessDetails};
 pub use swap::Swap;
 
 use crate::backend::MonitorBackend;
@@ -119,7 +117,11 @@ impl<B> RunningProcesses for MonitorState<B>
 where
     B: MonitorBackend,
 {
-    fn processes<'a>(&'a self) -> Result<Vec<Process<'a>>> {
+    fn processes(&self) -> Result<Vec<Process>> {
         self.backend.processes()
+    }
+
+    fn process_details(&self, pid: u32) -> Result<ProcessDetails> {
+        self.backend.process_details(pid)
     }
 }

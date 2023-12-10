@@ -18,7 +18,7 @@ where
 {
     let mem = state.memory()?;
     let mut procs = state.processes()?;
-    procs.sort_by(|p1, p2| p2.cpu.total_cmp(&p1.cpu));
+    procs.sort_by(|p1, p2| p2.cpu_util.total_cmp(&p1.cpu_util));
     debug!("proctbl: rendering {} processes in {:?}", procs.len(), area);
     let mut rows = Vec::with_capacity(procs.len());
     for proc in &procs {
@@ -60,13 +60,13 @@ where
     Ok(())
 }
 
-fn process_row<'a, B>(state: &MonitorState<B>, mem: &Memory, proc: &Process<'a>) -> Result<Row<'a>>
+fn process_row<'a, B>(state: &MonitorState<B>, mem: &Memory, proc: &Process) -> Result<Row<'a>>
 where
     B: MonitorBackend,
 {
-    let io = proc.io.as_ref();
+    let cmd = state.process_details(proc.pid).ok();
     Ok(Row::new([
-        Cell::from(format!("{:.1}", proc.cpu * 100.0)),
+        Cell::from(format!("{:.1}", proc.cpu_util * 100.0)),
         Cell::from(format!(
             "{:.1}",
             proc.mem_rss as f32 * 100.0 / mem.total as f32
@@ -86,16 +86,16 @@ where
         ),
         Cell::from(proc.status.to_string()),
         Cell::from(
-            Line::from(io.map(|io| fmt_int_bytes(io.new_read)).unwrap_or("".into()))
+            Line::from(proc.io_read.map(fmt_int_bytes).unwrap_or_default())
                 .alignment(Alignment::Right),
         ),
         Cell::from(
-            Line::from(
-                io.map(|io| fmt_int_bytes(io.new_write))
-                    .unwrap_or("".into()),
-            )
-            .alignment(Alignment::Right),
+            Line::from(proc.io_write.map(fmt_int_bytes).unwrap_or_default())
+                .alignment(Alignment::Right),
         ),
-        Cell::from(proc.cmd.join(" ")),
+        Cell::from(
+            cmd.map(|c| c.cmdline.join(" "))
+                .unwrap_or_else(|| proc.name.clone()),
+        ),
     ]))
 }

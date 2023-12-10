@@ -87,7 +87,7 @@ impl MonitorBackend for System {
         })
     }
 
-    fn processes<'a>(&'a self) -> Result<Vec<Process<'a>>> {
+    fn processes<'a>(&'a self) -> Result<Vec<Process>> {
         let procs = SystemExt::processes(self);
         let mut out = Vec::with_capacity(procs.len());
         for proc in procs.values() {
@@ -96,8 +96,6 @@ impl MonitorBackend for System {
                 pid: proc.pid().as_u32(),
                 ppid: proc.parent().map(|p| p.as_u32()),
                 name: proc.name().into(),
-                exe: proc.exe().into(),
-                cmd: proc.cmd().into(),
                 uid: proc.user_id().map(|u| **u),
                 status: match proc.status() {
                     sysinfo::ProcessStatus::Idle => 'I',
@@ -105,31 +103,34 @@ impl MonitorBackend for System {
                     sysinfo::ProcessStatus::Sleep => 'S',
                     sysinfo::ProcessStatus::Stop => 'T',
                     sysinfo::ProcessStatus::Zombie => 'Z',
-                    sysinfo::ProcessStatus::Tracing => 'G',
-                    sysinfo::ProcessStatus::Dead => 'D',
+                    sysinfo::ProcessStatus::Tracing => 't',
+                    sysinfo::ProcessStatus::Dead => 'X',
                     sysinfo::ProcessStatus::Wakekill => 'K',
                     sysinfo::ProcessStatus::Waking => 'W',
                     sysinfo::ProcessStatus::Parked => 'P',
                     sysinfo::ProcessStatus::LockBlocked => 'L',
-                    sysinfo::ProcessStatus::UninterruptibleDiskSleep => 'U',
-                    sysinfo::ProcessStatus::Unknown(_) => 'X',
+                    sysinfo::ProcessStatus::UninterruptibleDiskSleep => 'D',
+                    sysinfo::ProcessStatus::Unknown(_) => '?',
                 },
-                cpu: proc.cpu_usage() / 100.0,
+                cpu_util: proc.cpu_usage() / 100.0,
+                cpu_utime: None,
+                cpu_stime: None,
                 mem_rss: proc.memory(),
                 mem_virt: proc.virtual_memory(),
-                io: if disk.total_read_bytes > 0 {
-                    Some(IOUsage {
-                        tot_read: disk.total_read_bytes,
-                        tot_write: disk.total_written_bytes,
-                        new_read: disk.read_bytes,
-                        new_write: disk.written_bytes,
-                    })
-                } else {
-                    None
-                },
-                wall_time: Duration::from_secs(proc.run_time()),
+                io_read: Some(disk.read_bytes),
+                io_write: Some(disk.written_bytes),
             })
         }
         Ok(out)
+    }
+
+    fn process_details(&self, pid: u32) -> Result<ProcessDetails> {
+        let procs = SystemExt::processes(self);
+        let pid = PidExt::from_u32(pid);
+        let proc = procs.get(&pid).ok_or(anyhow!("missing process"))?;
+        Ok(ProcessDetails {
+            exe: proc.exe().to_string_lossy().into(),
+            cmdline: proc.cmd().into(),
+        })
     }
 }
