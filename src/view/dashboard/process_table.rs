@@ -13,6 +13,7 @@ use crate::{
 };
 
 type ColProc = fn(&dyn MonitorData, &Process) -> Result<String>;
+type ColPredicate = fn(&dyn MonitorData) -> bool;
 
 struct PTColumn {
     label: &'static str,
@@ -20,6 +21,7 @@ struct PTColumn {
     align: Alignment,
     sort_key: Option<ProcSortOrder>,
     ex_func: ColProc,
+    active_pred: ColPredicate,
 }
 
 impl PTColumn {
@@ -30,6 +32,7 @@ impl PTColumn {
             align: Alignment::Left,
             sort_key: None,
             ex_func: |_, _| Ok(String::new()),
+            active_pred: |_| true,
         }
     }
 
@@ -50,6 +53,17 @@ impl PTColumn {
 
     const fn extract(self, ex_func: ColProc) -> Self {
         PTColumn { ex_func, ..self }
+    }
+
+    const fn condition(self, active_pred: ColPredicate) -> Self {
+        PTColumn {
+            active_pred,
+            ..self
+        }
+    }
+
+    fn enabled(&self, state: &dyn MonitorData) -> bool {
+        (self.active_pred)(state)
     }
 }
 
@@ -91,6 +105,7 @@ static COLUMNS: &[PTColumn] = &[
         .width(5)
         .align(Alignment::Right)
         .sort(ProcSortOrder::Time)
+        .condition(|state| state.backend().has_process_time())
         .extract(|_, proc| Ok(proc.cpu_time.map(fmt_duration).unwrap_or_default())),
     PTColumn::new("S")
         .width(1)
@@ -194,6 +209,7 @@ where
 
     let widths: Vec<_> = COLUMNS
         .iter()
+        .filter(|c| c.enabled(state))
         .map(|c| {
             if c.width > 0 {
                 Constraint::Length(c.width)
@@ -204,6 +220,7 @@ where
         .collect();
     let header: Vec<_> = COLUMNS
         .iter()
+        .filter(|c| c.enabled(state))
         .map(|c| {
             let span = Span::from(c.label);
             let span = match c.sort_key {
@@ -228,6 +245,10 @@ where
 {
     let mut cells = Vec::with_capacity(COLUMNS.len());
     for col in COLUMNS {
+        if !col.enabled(state) {
+            continue;
+        }
+
         let text = (col.ex_func)(state, proc)?;
         let line = Line::from(text).alignment(col.align);
         cells.push(line);

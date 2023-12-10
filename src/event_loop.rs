@@ -42,7 +42,7 @@ where
                         KeyCode::Char('i') => {
                             state.proc_sort = Some(crate::model::ProcSortOrder::IO)
                         }
-                        KeyCode::Char('t') => {
+                        KeyCode::Char('t') if state.backend.has_process_time() => {
                             state.proc_sort = Some(crate::model::ProcSortOrder::Time)
                         }
 

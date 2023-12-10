@@ -44,4 +44,6 @@ pub trait MonitorBackend {
 
     /// Get the comamnd information for a process.
     fn process_details(&self, pid: u32) -> Result<ProcessDetails>;
+
+    fn has_process_time(&self) -> bool;
 }

@@ -139,4 +139,8 @@ impl MonitorBackend for System {
             cmdline: proc.cmd().into(),
         })
     }
+
+    fn has_process_time(&self) -> bool {
+        false
+    }
 }
