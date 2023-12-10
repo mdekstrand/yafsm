@@ -78,7 +78,7 @@ impl DumpOpts {
     fn dump_processes(&self, state: &dyn MonitorData) -> Result<()> {
         let procs = state.processes()?;
         info!("dumping {} processes", procs.len());
-        for proc in procs {
+        for proc in procs.iter() {
             println!("{:?}", proc);
         }
         Ok(())

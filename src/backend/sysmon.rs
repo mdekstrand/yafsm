@@ -51,6 +51,10 @@ impl MonitorBackend for System {
             .ok_or(anyhow!("CPU count unavailable"))
     }
 
+    fn logical_cpu_count(&self) -> Result<u32> {
+        Ok(self.cpus().len() as u32)
+    }
+
     fn global_cpu(&self) -> Result<CPU> {
         Ok(CPU {
             utilization: self.global_cpu_info().cpu_usage() / 100.0,
@@ -116,6 +120,7 @@ impl MonitorBackend for System {
                 cpu_time: None,
                 cpu_utime: None,
                 cpu_stime: None,
+                mem_util: proc.memory() as f32 / self.memory()?.total as f32,
                 mem_rss: proc.memory(),
                 mem_virt: proc.virtual_memory(),
                 io_read: Some(disk.read_bytes),

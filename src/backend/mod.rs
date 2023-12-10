@@ -24,6 +24,9 @@ pub trait MonitorBackend {
     /// Get the number of physical CPU cores.
     fn cpu_count(&self) -> Result<u32>;
 
+    /// Get the number of physical CPU cores.
+    fn logical_cpu_count(&self) -> Result<u32>;
+
     /// Get overall CPU utilization.
     fn global_cpu(&self) -> Result<CPU>;
 

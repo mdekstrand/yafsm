@@ -30,7 +30,8 @@ pub trait SystemResources {
 
 pub trait RunningProcesses {
     /// Get the running processes.
-    fn processes<'a>(&'a self) -> Result<Vec<Process>>;
+    fn processes(&self) -> Result<ProcessList>;
+
     /// Get command information for a process.
     fn process_details(&self, pid: u32) -> Result<ProcessDetails>;
 }

@@ -16,11 +16,12 @@ pub use cpu::CPU;
 pub use load::LoadAvg;
 pub use memory::Memory;
 pub use options::Options;
-pub use process::{Process, ProcessDetails};
+pub use process::{ProcSortOrder, Process, ProcessDetails};
 pub use swap::Swap;
 
 use crate::backend::MonitorBackend;
 
+use self::process::ProcessList;
 pub use self::source::{RunningProcesses, SystemInfo, SystemResources};
 
 /// Interface for data monitor sources.
@@ -37,6 +38,8 @@ pub trait MonitorData: SystemInfo + SystemResources + RunningProcesses {
 pub struct MonitorState<B: MonitorBackend> {
     pub options: Options,
     pub backend: B,
+    /// Sort order for processes.  [None] to sort automatically.
+    pub proc_sort: Option<ProcSortOrder>,
     pub user_db: UsersCache,
 }
 
@@ -48,6 +51,7 @@ where
         Ok(MonitorState {
             options,
             backend,
+            proc_sort: None,
             user_db: UsersCache::new(),
         })
     }
@@ -117,8 +121,8 @@ impl<B> RunningProcesses for MonitorState<B>
 where
     B: MonitorBackend,
 {
-    fn processes(&self) -> Result<Vec<Process>> {
-        self.backend.processes()
+    fn processes(&self) -> Result<ProcessList> {
+        ProcessList::create(self, self.backend.processes()?)
     }
 
     fn process_details(&self, pid: u32) -> Result<ProcessDetails> {

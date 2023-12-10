@@ -3,12 +3,12 @@ use log::*;
 use ratatui::{
     layout::SegmentSize,
     prelude::*,
-    widgets::{Cell, Row, Table},
+    widgets::{Cell, Paragraph, Row, Table},
 };
 
 use crate::{
     backend::MonitorBackend,
-    model::*,
+    model::{process::ProcessList, *},
     view::util::{fmt_bytes, fmt_duration, fmt_int_bytes},
 };
 
@@ -16,12 +16,74 @@ pub fn render_process_table<B>(frame: &mut Frame, state: &MonitorState<B>, area:
 where
     B: MonitorBackend,
 {
-    let mem = state.memory()?;
     let mut procs = state.processes()?;
-    procs.sort_by(|p1, p2| p2.cpu_util.total_cmp(&p1.cpu_util));
+    procs.sort();
+
+    let layout = Layout::new(
+        Direction::Vertical,
+        &[
+            Constraint::Length(1),
+            Constraint::Length(1),
+            Constraint::Min(5),
+        ],
+    )
+    .split(area);
+
+    render_headline(state, &procs, frame, layout[0])?;
+    render_table(state, &procs, frame, layout[2])?;
+
+    Ok(())
+}
+
+fn render_headline<B>(
+    state: &MonitorState<B>,
+    procs: &ProcessList,
+    frame: &mut Frame,
+    area: Rect,
+) -> Result<()>
+where
+    B: MonitorBackend,
+{
+    let counts = procs.counts();
+    let hl = Line::from(vec![
+        Span::from("TASKS").bold(),
+        Span::from(format!(
+            " {} run, {} slp, {} oth",
+            counts.running, counts.sleeping, counts.other
+        )),
+        Span::from(" sorted"),
+        Span::from(if state.proc_sort.is_none() {
+            " automatically"
+        } else {
+            ""
+        }),
+        Span::from(" by "),
+        Span::from(match procs.active_sort_order() {
+            ProcSortOrder::CPU => "CPU usage",
+            ProcSortOrder::Memory => "memory",
+            ProcSortOrder::IO => "total I/O",
+            ProcSortOrder::Time => "time",
+        }),
+    ]);
+    let hl = Paragraph::new(vec![hl]);
+
+    frame.render_widget(hl, area);
+    Ok(())
+}
+
+fn render_table<B>(
+    state: &MonitorState<B>,
+    procs: &ProcessList,
+    frame: &mut Frame,
+    area: Rect,
+) -> Result<()>
+where
+    B: MonitorBackend,
+{
     debug!("proctbl: rendering {} processes in {:?}", procs.len(), area);
+    let mem = state.memory()?;
     let mut rows = Vec::with_capacity(procs.len());
-    for proc in &procs {
+    for proc in procs.iter() {
         rows.push(process_row(state, &mem, proc)?);
     }
 
@@ -58,7 +120,6 @@ where
     .segment_size(SegmentSize::LastTakesRemainder)
     .highlight_symbol(">");
     frame.render_widget(table, area);
-
     Ok(())
 }
 
