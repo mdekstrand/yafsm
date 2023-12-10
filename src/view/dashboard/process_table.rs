@@ -12,6 +12,20 @@ use crate::{
     view::util::{fmt_bytes, fmt_duration, fmt_int_bytes},
 };
 
+static COLUMNS: [(&str, u16, Alignment, Option<ProcSortOrder>); 11] = [
+    ("CPU%", 4, Alignment::Right, Some(ProcSortOrder::CPU)),
+    ("MEM%", 5, Alignment::Right, Some(ProcSortOrder::Memory)),
+    ("VIRT", 5, Alignment::Right, None),
+    ("RES", 6, Alignment::Right, None),
+    ("PID", 6, Alignment::Right, None),
+    ("USER", 8, Alignment::Right, None),
+    ("TIME", 5, Alignment::Right, Some(ProcSortOrder::Time)),
+    ("S", 1, Alignment::Center, None),
+    ("R/s", 5, Alignment::Right, Some(ProcSortOrder::IO)),
+    ("W/s", 5, Alignment::Right, Some(ProcSortOrder::IO)),
+    ("Command", 0, Alignment::Left, None),
+];
+
 pub fn render_process_table<B>(frame: &mut Frame, state: &MonitorState<B>, area: Rect) -> Result<()>
 where
     B: MonitorBackend,
@@ -87,38 +101,25 @@ where
         rows.push(process_row(state, &mem, proc)?);
     }
 
-    let table = Table::new(
-        rows,
-        &[
-            Constraint::Length(4),
-            Constraint::Length(4),
-            Constraint::Length(5),
-            Constraint::Length(5),
-            Constraint::Length(6),
-            Constraint::Length(8),
-            Constraint::Length(5),
-            Constraint::Length(1),
-            Constraint::Length(5),
-            Constraint::Length(5),
-            Constraint::Min(20),
-        ],
-    )
-    .header(Row::new([
-        Cell::from("CPU%"),
-        Cell::from("MEM%"),
-        Cell::from("VIRT"),
-        Cell::from("RES"),
-        Cell::from(Line::from("PID").alignment(Alignment::Right)),
-        Cell::from(Line::from("USER").alignment(Alignment::Right)),
-        Cell::from(Line::from("TIME").alignment(Alignment::Right)),
-        Cell::from("S"),
-        Cell::from(Line::from("R/s").alignment(Alignment::Right)),
-        Cell::from(Line::from("W/s").alignment(Alignment::Right)),
-        Cell::from("Command"),
-    ]))
-    .column_spacing(1)
-    .segment_size(SegmentSize::LastTakesRemainder)
-    .highlight_symbol(">");
+    let widths = COLUMNS.map(|(_, w, _, _)| {
+        if w > 0 {
+            Constraint::Length(w)
+        } else {
+            Constraint::Min(20)
+        }
+    });
+    let header = COLUMNS.map(|(l, _, a, hif)| {
+        let c = Cell::from(Line::from(l).alignment(a));
+        match hif {
+            Some(s) if s == procs.active_sort_order() => c.bold().underlined(),
+            _ => c,
+        }
+    });
+    let table = Table::new(rows, &widths)
+        .header(Row::new(header))
+        .column_spacing(1)
+        .segment_size(SegmentSize::LastTakesRemainder)
+        .highlight_symbol(">");
     frame.render_widget(table, area);
     Ok(())
 }
