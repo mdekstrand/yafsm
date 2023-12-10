@@ -95,7 +95,7 @@ where
         ),
         Cell::from(
             cmd.map(|c| c.cmdline.join(" "))
-                .unwrap_or_else(|| proc.name.clone()),
+                .unwrap_or_else(|| format!("[{}]", proc.name)),
         ),
     ]))
 }
