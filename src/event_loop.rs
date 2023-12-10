@@ -31,6 +31,21 @@ where
                     // keypress
                     match e.code {
                         KeyCode::Char('q') => return Ok(()),
+                        // key process sorting
+                        KeyCode::Char('a') => state.proc_sort = None,
+                        KeyCode::Char('c') => {
+                            state.proc_sort = Some(crate::model::ProcSortOrder::CPU)
+                        }
+                        KeyCode::Char('m') => {
+                            state.proc_sort = Some(crate::model::ProcSortOrder::Memory)
+                        }
+                        KeyCode::Char('i') => {
+                            state.proc_sort = Some(crate::model::ProcSortOrder::IO)
+                        }
+                        KeyCode::Char('t') => {
+                            state.proc_sort = Some(crate::model::ProcSortOrder::Time)
+                        }
+
                         _ => (),
                     }
                 }
