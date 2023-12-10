@@ -12,18 +12,110 @@ use crate::{
     view::util::{fmt_bytes, fmt_duration, fmt_int_bytes},
 };
 
-static COLUMNS: [(&str, u16, Alignment, Option<ProcSortOrder>); 11] = [
-    ("CPU%", 4, Alignment::Right, Some(ProcSortOrder::CPU)),
-    ("MEM%", 5, Alignment::Right, Some(ProcSortOrder::Memory)),
-    ("VIRT", 5, Alignment::Right, None),
-    ("RES", 6, Alignment::Right, None),
-    ("PID", 6, Alignment::Right, None),
-    ("USER", 8, Alignment::Right, None),
-    ("TIME", 5, Alignment::Right, Some(ProcSortOrder::Time)),
-    ("S", 1, Alignment::Center, None),
-    ("R/s", 5, Alignment::Right, Some(ProcSortOrder::IO)),
-    ("W/s", 5, Alignment::Right, Some(ProcSortOrder::IO)),
-    ("Command", 0, Alignment::Left, None),
+type ColProc = fn(&dyn MonitorData, &Process) -> Result<String>;
+
+struct PTColumn {
+    label: &'static str,
+    width: u16,
+    align: Alignment,
+    sort_key: Option<ProcSortOrder>,
+    ex_func: ColProc,
+}
+
+impl PTColumn {
+    const fn new(label: &'static str) -> PTColumn {
+        PTColumn {
+            label,
+            width: 0,
+            align: Alignment::Left,
+            sort_key: None,
+            ex_func: |_, _| Ok(String::new()),
+        }
+    }
+
+    const fn width(self, width: u16) -> Self {
+        PTColumn { width, ..self }
+    }
+
+    const fn align(self, align: Alignment) -> Self {
+        PTColumn { align, ..self }
+    }
+
+    const fn sort(self, key: ProcSortOrder) -> Self {
+        PTColumn {
+            sort_key: Some(key),
+            ..self
+        }
+    }
+
+    const fn extract(self, ex_func: ColProc) -> Self {
+        PTColumn { ex_func, ..self }
+    }
+}
+
+static COLUMNS: &[PTColumn] = &[
+    PTColumn::new("CPU%")
+        .width(4)
+        .align(Alignment::Right)
+        .sort(ProcSortOrder::CPU)
+        .extract(|_, proc| Ok(format!("{:.1}", proc.cpu_util * 100.0))),
+    PTColumn::new("MEM%")
+        .width(5)
+        .align(Alignment::Right)
+        .sort(ProcSortOrder::Memory)
+        .extract(|_, proc| Ok(format!("{:.1}", proc.mem_util * 100.0))),
+    PTColumn::new("VIRT")
+        .width(5)
+        .align(Alignment::Right)
+        .extract(|_, proc| Ok(fmt_bytes(proc.mem_virt))),
+    PTColumn::new("RES")
+        .width(6)
+        .align(Alignment::Right)
+        .extract(|_, proc| Ok(fmt_bytes(proc.mem_rss))),
+    PTColumn::new("PID")
+        .width(6)
+        .align(Alignment::Right)
+        .extract(|_, proc| Ok(format!("{}", proc.pid))),
+    PTColumn::new("USER")
+        .width(8)
+        .align(Alignment::Right)
+        .extract(|state, proc| {
+            Ok(proc
+                .uid
+                .map(|u| state.lookup_user(u))
+                .transpose()?
+                .flatten()
+                .unwrap_or("??".into()))
+        }),
+    PTColumn::new("TIME")
+        .width(5)
+        .align(Alignment::Right)
+        .sort(ProcSortOrder::Time)
+        .extract(|_, proc| Ok(proc.cpu_time.map(fmt_duration).unwrap_or_default())),
+    PTColumn::new("S")
+        .width(1)
+        .align(Alignment::Center)
+        .extract(|_, proc| Ok(proc.status.to_string())),
+    PTColumn::new("R/s")
+        .width(5)
+        .align(Alignment::Right)
+        .sort(ProcSortOrder::IO)
+        .extract(|_, proc| Ok(proc.io_read.map(fmt_int_bytes).unwrap_or_default())),
+    PTColumn::new("W/s")
+        .width(5)
+        .align(Alignment::Right)
+        .sort(ProcSortOrder::IO)
+        .extract(|_, proc| Ok(proc.io_write.map(fmt_int_bytes).unwrap_or_default())),
+    PTColumn::new("Command")
+        .width(0)
+        .align(Alignment::Left)
+        .extract(|state, proc| {
+            let cmd = state.process_details(proc.pid);
+            Ok(cmd
+                .ok()
+                .map(|c| c.cmdline.join(" "))
+                .unwrap_or_else(|| format!("[{}]", proc.name)))
+        }),
 ];
 
 pub fn render_process_table<B>(frame: &mut Frame, state: &MonitorState<B>, area: Rect) -> Result<()>
@@ -100,20 +192,27 @@ where
         rows.push(process_row(state, proc)?);
     }
 
-    let widths = COLUMNS.map(|(_, w, _, _)| {
-        if w > 0 {
-            Constraint::Length(w)
-        } else {
-            Constraint::Min(20)
-        }
-    });
-    let header = COLUMNS.map(|(l, _, a, hif)| {
-        let c = Cell::from(Line::from(l).alignment(a));
-        match hif {
-            Some(s) if s == procs.active_sort_order() => c.bold().underlined(),
-            _ => c,
-        }
-    });
+    let widths: Vec<_> = COLUMNS
+        .iter()
+        .map(|c| {
+            if c.width > 0 {
+                Constraint::Length(c.width)
+            } else {
+                Constraint::Min(20)
+            }
+        })
+        .collect();
+    let header: Vec<_> = COLUMNS
+        .iter()
+        .map(|c| {
+            let span = Span::from(c.label);
+            let span = match c.sort_key {
+                Some(s) if s == procs.active_sort_order() => span.bold().underlined(),
+                _ => span,
+            };
+            Cell::from(Line::from(span).alignment(c.align))
+        })
+        .collect();
     let table = Table::new(rows, &widths)
         .header(Row::new(header))
         .column_spacing(1)
@@ -127,39 +226,11 @@ fn process_row<'a, B>(state: &MonitorState<B>, proc: &Process) -> Result<Row<'a>
 where
     B: MonitorBackend,
 {
-    let cmd = state.process_details(proc.pid).ok();
-    Ok(Row::new([
-        Cell::from(format!("{:.1}", proc.cpu_util * 100.0)),
-        Cell::from(format!("{:.1}", proc.mem_util * 100.0)),
-        Cell::from(fmt_bytes(proc.mem_virt)),
-        Cell::from(fmt_bytes(proc.mem_rss)),
-        Cell::from(Line::from(format!("{}", proc.pid)).alignment(Alignment::Right)),
-        Cell::from(
-            Line::from(
-                proc.uid
-                    .map(|u| state.lookup_user(u))
-                    .transpose()?
-                    .flatten()
-                    .unwrap_or("??".into()),
-            )
-            .alignment(Alignment::Right),
-        ),
-        Cell::from(
-            Line::from(proc.cpu_time.map(fmt_duration).unwrap_or_default())
-                .alignment(Alignment::Right),
-        ),
-        Cell::from(proc.status.to_string()),
-        Cell::from(
-            Line::from(proc.io_read.map(fmt_int_bytes).unwrap_or_default())
-                .alignment(Alignment::Right),
-        ),
-        Cell::from(
-            Line::from(proc.io_write.map(fmt_int_bytes).unwrap_or_default())
-                .alignment(Alignment::Right),
-        ),
-        Cell::from(
-            cmd.map(|c| c.cmdline.join(" "))
-                .unwrap_or_else(|| format!("[{}]", proc.name)),
-        ),
-    ]))
+    let mut cells = Vec::with_capacity(COLUMNS.len());
+    for col in COLUMNS {
+        let text = (col.ex_func)(state, proc)?;
+        let line = Line::from(text).alignment(col.align);
+        cells.push(line);
+    }
+    Ok(Row::new(cells))
 }
