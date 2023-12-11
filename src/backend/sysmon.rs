@@ -26,7 +26,10 @@ impl MonitorBackend for System {
         let specs = RefreshKind::new()
             .with_cpu(CpuRefreshKind::everything())
             .with_memory()
-            .with_processes(ProcessRefreshKind::everything());
+            .with_processes(ProcessRefreshKind::everything())
+            .with_networks()
+            .with_disks_list()
+            .with_disks();
         self.refresh_specifics(specs);
         Ok(())
     }
