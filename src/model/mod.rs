@@ -5,16 +5,20 @@ use anyhow::*;
 use uzers::{Users, UsersCache};
 
 pub mod cpu;
+pub mod disk;
 pub mod load;
 pub mod memory;
+pub mod network;
 pub mod options;
 pub mod process;
 pub mod source;
 pub mod swap;
 
 pub use cpu::CPU;
+pub use disk::DiskIO;
 pub use load::LoadAvg;
 pub use memory::Memory;
+pub use network::NetworkStats;
 pub use options::Options;
 pub use process::{ProcSortOrder, Process, ProcessDetails};
 pub use swap::Swap;
@@ -22,14 +26,14 @@ pub use swap::Swap;
 use crate::backend::MonitorBackend;
 
 use self::process::ProcessList;
-pub use self::source::{RunningProcesses, SystemInfo, SystemResources};
+pub use self::source::{NetworkInfo, RunningProcesses, SystemInfo, SystemResources};
 
 /// Interface for data monitor sources.
 ///
 /// This is defined as a trait so the monitor state can be object-safe, where that might
 /// be helpful.  It also has methods that are somewhat duplicative of [MonitorBackend],
 /// but many of them handle checking whether that feature should be enabled.
-pub trait MonitorData: SystemInfo + SystemResources + RunningProcesses {
+pub trait MonitorData: SystemInfo + SystemResources + RunningProcesses + NetworkInfo {
     fn backend(&self) -> &dyn MonitorBackend;
     fn lookup_user(&self, uid: u32) -> Result<Option<String>>;
 }
@@ -127,5 +131,14 @@ where
 
     fn process_details(&self, pid: u32) -> Result<ProcessDetails> {
         self.backend.process_details(pid)
+    }
+}
+
+impl<B> NetworkInfo for MonitorState<B>
+where
+    B: MonitorBackend,
+{
+    fn networks(&self) -> Result<Vec<NetworkStats>> {
+        self.backend.networks()
     }
 }

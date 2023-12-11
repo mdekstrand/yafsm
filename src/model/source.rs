@@ -35,3 +35,8 @@ pub trait RunningProcesses {
     /// Get command information for a process.
     fn process_details(&self, pid: u32) -> Result<ProcessDetails>;
 }
+
+pub trait NetworkInfo {
+    /// Get the networks.
+    fn networks(&self) -> Result<Vec<NetworkStats>>;
+}

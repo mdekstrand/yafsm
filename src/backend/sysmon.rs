@@ -5,7 +5,8 @@ use std::time::Duration;
 use anyhow::{anyhow, Result};
 use log::*;
 use sysinfo::{
-    CpuExt, CpuRefreshKind, PidExt, ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt,
+    CpuExt, CpuRefreshKind, NetworkExt, PidExt, ProcessExt, ProcessRefreshKind, RefreshKind,
+    System, SystemExt,
 };
 
 use crate::model::*;
@@ -138,6 +139,20 @@ impl MonitorBackend for System {
             exe: proc.exe().to_string_lossy().into(),
             cmdline: proc.cmd().into(),
         })
+    }
+
+    fn networks(&self) -> Result<Vec<NetworkStats>> {
+        let nets = SystemExt::networks(self);
+        Ok(nets
+            .into_iter()
+            .map(|(name, stats)| NetworkStats {
+                name: name.clone(),
+                rx_bytes: stats.received(),
+                tx_bytes: stats.transmitted(),
+                rx_packets: stats.packets_received(),
+                tx_packets: stats.packets_transmitted(),
+            })
+            .collect())
     }
 
     fn has_process_time(&self) -> bool {
