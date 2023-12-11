@@ -17,7 +17,10 @@ use summaries::*;
 
 use crate::{backend::MonitorBackend, model::MonitorState};
 
-use self::{iotables::render_network, process_table::render_process_table};
+use self::{
+    iotables::{render_filesystems, render_network},
+    process_table::render_process_table,
+};
 
 use super::widgets::tablegrp::TableGroup;
 
@@ -73,6 +76,7 @@ where
 
     let mut lsg = TableGroup::new();
     render_network(state, &mut lsg)?;
+    render_filesystems(state, &mut lsg)?;
 
     let tables = Layout::new(
         Direction::Horizontal,

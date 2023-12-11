@@ -40,3 +40,8 @@ pub trait NetworkInfo {
     /// Get the networks.
     fn networks(&self) -> Result<Vec<NetworkStats>>;
 }
+
+pub trait StorageInfo {
+    /// Get the filesystems.
+    fn filesystems(&self) -> Result<Vec<Filesystem>>;
+}

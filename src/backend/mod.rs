@@ -48,5 +48,8 @@ pub trait MonitorBackend {
     /// Get the networks.
     fn networks(&self) -> Result<Vec<NetworkStats>>;
 
+    /// Get the filesystems.
+    fn filesystems(&self) -> Result<Vec<Filesystem>>;
+
     fn has_process_time(&self) -> bool;
 }

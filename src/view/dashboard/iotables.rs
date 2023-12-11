@@ -24,3 +24,16 @@ pub fn render_network(state: &dyn MonitorData, tg: &mut TableGroup) -> Result<()
     }
     Ok(())
 }
+
+pub fn render_filesystems(state: &dyn MonitorData, tg: &mut TableGroup) -> Result<()> {
+    let disks = state
+        .filesystems()?
+        .into_iter()
+        .sorted_by(|n1, n2| n1.mount_point.cmp(&n2.mount_point))
+        .collect_vec();
+    let tbl = tg.add_table("FILESYSTEMS", ["Used", "Total"]);
+    for fs in disks {
+        tbl.add_row(fs.name, [fmt_int_bytes(fs.used), fmt_int_bytes(fs.total)])
+    }
+    Ok(())
+}

@@ -3,10 +3,11 @@
 use std::time::Duration;
 
 use anyhow::{anyhow, Result};
+use itertools::Itertools;
 use log::*;
 use sysinfo::{
-    CpuExt, CpuRefreshKind, NetworkExt, PidExt, ProcessExt, ProcessRefreshKind, RefreshKind,
-    System, SystemExt,
+    CpuExt, CpuRefreshKind, DiskExt, NetworkExt, PidExt, ProcessExt, ProcessRefreshKind,
+    RefreshKind, System, SystemExt,
 };
 
 use crate::model::*;
@@ -153,6 +154,20 @@ impl MonitorBackend for System {
                 tx_packets: stats.packets_transmitted(),
             })
             .collect())
+    }
+
+    fn filesystems(&self) -> Result<Vec<Filesystem>> {
+        let disks = SystemExt::disks(self);
+        Ok(disks
+            .into_iter()
+            .map(|d| Filesystem {
+                name: d.name().to_string_lossy().into(),
+                mount_point: format!("{}", d.mount_point().display()),
+                total: d.total_space(),
+                avail: d.available_space(),
+                used: d.total_space() - d.available_space(),
+            })
+            .collect_vec())
     }
 
     fn has_process_time(&self) -> bool {
