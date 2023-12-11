@@ -2,10 +2,14 @@
 
 use anyhow::Result;
 use itertools::Itertools;
+use ratatui::prelude::*;
 
 use crate::{
     model::MonitorData,
-    view::{util::fmt_int_bytes, widgets::tablegrp::TableGroup},
+    view::{
+        util::{fmt_bytes, fmt_int_bytes},
+        widgets::tablegrp::TableGroup,
+    },
 };
 
 pub fn render_network(state: &dyn MonitorData, tg: &mut TableGroup) -> Result<()> {
@@ -33,10 +37,21 @@ pub fn render_filesystems(state: &dyn MonitorData, tg: &mut TableGroup) -> Resul
         .collect_vec();
     let tbl = tg.add_table("FILESYSTEMS", ["Used", "Total"]);
     for fs in disks {
-        tbl.add_row(
-            fs.mount_point,
-            [fmt_int_bytes(fs.used), fmt_int_bytes(fs.total)],
-        )
+        let frac = fs.utilization();
+        let used = Span::from(fmt_bytes(fs.used));
+        let tot = Span::from(fmt_bytes(fs.total));
+        let used = if frac >= 0.9 {
+            used.bold().fg(Color::Red)
+        } else if frac >= 0.8 {
+            used.bold().fg(Color::Yellow)
+        } else if frac >= 0.7 {
+            used.bold().fg(Color::Magenta)
+        } else if frac >= 0.5 {
+            used.bold().fg(Color::Blue)
+        } else {
+            used.fg(Color::Green)
+        };
+        tbl.add_row(fs.mount_point, [used, tot])
     }
     Ok(())
 }
