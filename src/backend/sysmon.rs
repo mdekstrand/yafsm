@@ -131,11 +131,11 @@ impl MonitorBackend for System {
         Ok(out)
     }
 
-    fn process_details(&self, pid: u32) -> Result<ProcessDetails> {
+    fn process_cmd_info(&self, pid: u32) -> Result<ProcessCommandInfo> {
         let procs = SystemExt::processes(self);
         let pid = PidExt::from_u32(pid);
         let proc = procs.get(&pid).ok_or(anyhow!("missing process"))?;
-        Ok(ProcessDetails {
+        Ok(ProcessCommandInfo {
             exe: proc.exe().to_string_lossy().into(),
             cmdline: proc.cmd().into(),
         })

@@ -43,7 +43,7 @@ pub trait MonitorBackend {
     fn processes<'a>(&'a self) -> Result<Vec<Process>>;
 
     /// Get the comamnd information for a process.
-    fn process_details(&self, pid: u32) -> Result<ProcessDetails>;
+    fn process_cmd_info(&self, pid: u32) -> Result<ProcessCommandInfo>;
 
     /// Get the networks.
     fn networks(&self) -> Result<Vec<NetworkStats>>;

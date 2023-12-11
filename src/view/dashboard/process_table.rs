@@ -125,7 +125,7 @@ static COLUMNS: &[PTColumn] = &[
         .width(0)
         .align(Alignment::Left)
         .extract(|state, proc| {
-            let cmd = state.process_details(proc.pid);
+            let cmd = state.process_cmd_info(proc.pid);
             Ok(cmd
                 .ok()
                 .map(|c| c.cmdline.join(" "))

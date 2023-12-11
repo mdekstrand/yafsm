@@ -20,7 +20,7 @@ pub use load::LoadAvg;
 pub use memory::Memory;
 pub use network::NetworkStats;
 pub use options::Options;
-pub use process::{ProcSortOrder, Process, ProcessDetails};
+pub use process::{ProcSortOrder, Process, ProcessCommandInfo};
 pub use swap::Swap;
 
 use crate::backend::MonitorBackend;
@@ -129,8 +129,8 @@ where
         ProcessList::create(self, self.backend.processes()?)
     }
 
-    fn process_details(&self, pid: u32) -> Result<ProcessDetails> {
-        self.backend.process_details(pid)
+    fn process_cmd_info(&self, pid: u32) -> Result<ProcessCommandInfo> {
+        self.backend.process_cmd_info(pid)
     }
 }
 

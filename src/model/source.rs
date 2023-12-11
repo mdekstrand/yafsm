@@ -33,7 +33,7 @@ pub trait RunningProcesses {
     fn processes(&self) -> Result<ProcessList>;
 
     /// Get command information for a process.
-    fn process_details(&self, pid: u32) -> Result<ProcessDetails>;
+    fn process_cmd_info(&self, pid: u32) -> Result<ProcessCommandInfo>;
 }
 
 pub trait NetworkInfo {

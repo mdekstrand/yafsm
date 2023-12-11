@@ -52,7 +52,7 @@ pub struct Process {
 }
 
 #[derive(Debug, Clone)]
-pub struct ProcessDetails {
+pub struct ProcessCommandInfo {
     pub exe: String,
     pub cmdline: Vec<String>,
 }
