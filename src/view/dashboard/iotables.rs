@@ -33,7 +33,10 @@ pub fn render_filesystems(state: &dyn MonitorData, tg: &mut TableGroup) -> Resul
         .collect_vec();
     let tbl = tg.add_table("FILESYSTEMS", ["Used", "Total"]);
     for fs in disks {
-        tbl.add_row(fs.name, [fmt_int_bytes(fs.used), fmt_int_bytes(fs.total)])
+        tbl.add_row(
+            fs.mount_point,
+            [fmt_int_bytes(fs.used), fmt_int_bytes(fs.total)],
+        )
     }
     Ok(())
 }
