@@ -12,6 +12,8 @@ log = { version = "~0.4", features = ["release_max_level_debug"] }
 fern = "~0.6"
 clap = { version = "~4.4", features = ["derive"] }
 
+itertools = "~0.12"
+
 crossterm = "~0.27"
 ratatui = { version = "~0.24.1-alpha.6", features = ["unstable-segment-size"] }
 

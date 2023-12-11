@@ -6,6 +6,7 @@ use anyhow::Result;
 use ratatui::prelude::*;
 
 mod banner;
+mod iotables;
 mod process_table;
 mod quicklook;
 mod summaries;
@@ -16,7 +17,9 @@ use summaries::*;
 
 use crate::{backend::MonitorBackend, model::MonitorState};
 
-use self::process_table::render_process_table;
+use self::{iotables::render_network, process_table::render_process_table};
+
+use super::widgets::tablegrp::TableGroup;
 
 const QL_MIN: u16 = 20;
 
@@ -68,7 +71,21 @@ where
         frame.render_widget(ic, summary_split[i + 2]);
     }
 
-    render_process_table(frame, state, layout[4])?;
+    let mut lsg = TableGroup::new();
+    render_network(state, &mut lsg)?;
+
+    let tables = Layout::new(
+        Direction::Horizontal,
+        [
+            Constraint::Length(lsg.width()),
+            Constraint::Length(3),
+            Constraint::Min(30),
+        ],
+    )
+    .split(layout[4]);
+    frame.render_widget(lsg, tables[0]);
+
+    render_process_table(frame, state, tables[2])?;
 
     Ok(())
 }
