@@ -1,55 +1,56 @@
 //! Backend data collector implementations.
 use std::time::Duration;
 
-use anyhow::Result;
-
 use crate::model::*;
 
+pub mod error;
 pub mod sysmon;
+
+pub use error::{BackendError, BackendResult};
 
 /// Trait implemented by backend implementations.
 pub trait MonitorBackend {
     /// Refresh the system status data.
-    fn update(&mut self, opts: &Options) -> Result<()>;
+    fn update(&mut self, opts: &Options) -> BackendResult<()>;
 
     /// Get the hostname
-    fn hostname(&self) -> Result<String>;
+    fn hostname(&self) -> BackendResult<String>;
 
     /// Get the kernel
-    fn system_version(&self) -> Result<String>;
+    fn system_version(&self) -> BackendResult<String>;
 
     /// Get the system uptime.
-    fn uptime(&self) -> Result<Duration>;
+    fn uptime(&self) -> BackendResult<Duration>;
 
     /// Get the number of physical CPU cores.
-    fn cpu_count(&self) -> Result<u32>;
+    fn cpu_count(&self) -> BackendResult<u32>;
 
     /// Get the number of physical CPU cores.
-    fn logical_cpu_count(&self) -> Result<u32>;
+    fn logical_cpu_count(&self) -> BackendResult<u32>;
 
     /// Get overall CPU utilization.
-    fn global_cpu(&self) -> Result<CPU>;
+    fn global_cpu(&self) -> BackendResult<CPU>;
 
     /// Get memory usage.
-    fn memory(&self) -> Result<Memory>;
+    fn memory(&self) -> BackendResult<Memory>;
 
     /// Get swap usage.
-    fn swap(&self) -> Result<Swap>;
+    fn swap(&self) -> BackendResult<Swap>;
 
     /// Get the system load average.
-    fn load_avg(&self) -> Result<LoadAvg>;
+    fn load_avg(&self) -> BackendResult<LoadAvg>;
 
     /// Get the running processes.
-    fn processes<'a>(&'a self) -> Result<Vec<Process>>;
+    fn processes<'a>(&'a self) -> BackendResult<Vec<Process>>;
 
     /// Get the comamnd information for a process.
-    fn process_cmd_info(&self, pid: u32) -> Result<ProcessCommandInfo>;
+    fn process_cmd_info(&self, pid: u32) -> BackendResult<ProcessCommandInfo>;
 
     /// Get the networks.
-    fn networks(&self) -> Result<Vec<NetworkStats>>;
+    fn networks(&self) -> BackendResult<Vec<NetworkStats>>;
 
     /// Get the filesystems.
-    fn filesystems(&self) -> Result<Vec<Filesystem>>;
+    fn filesystems(&self) -> BackendResult<Vec<Filesystem>>;
 
     fn has_process_time(&self) -> bool;
 }

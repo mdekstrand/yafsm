@@ -2,7 +2,6 @@
 
 use std::time::Duration;
 
-use anyhow::{anyhow, Result};
 use itertools::Itertools;
 use log::*;
 use sysinfo::{
@@ -12,16 +11,16 @@ use sysinfo::{
 
 use crate::model::*;
 
-use super::MonitorBackend;
+use super::{error::generic_err, BackendResult, MonitorBackend};
 
-pub fn initialize() -> Result<System> {
+pub fn initialize() -> BackendResult<System> {
     let mut sys = System::new();
     sys.refresh_specifics(RefreshKind::everything());
     Ok(sys)
 }
 
 impl MonitorBackend for System {
-    fn update(&mut self, _opts: &Options) -> Result<()> {
+    fn update(&mut self, _opts: &Options) -> BackendResult<()> {
         debug!("refreshing system");
         let specs = RefreshKind::new()
             .with_cpu(CpuRefreshKind::everything())
@@ -34,39 +33,41 @@ impl MonitorBackend for System {
         Ok(())
     }
 
-    fn hostname(&self) -> Result<String> {
-        self.host_name().ok_or(anyhow!("no host name"))
+    fn hostname(&self) -> BackendResult<String> {
+        self.host_name().ok_or(generic_err("no host name"))
     }
 
-    fn system_version(&self) -> Result<String> {
+    fn system_version(&self) -> BackendResult<String> {
         let os = self.distribution_id();
-        let osv = self.os_version().ok_or(anyhow!("no system version"))?;
-        let k = self.name().ok_or(anyhow!("no system name"))?;
-        let kv = self.kernel_version().ok_or(anyhow!("no kernel version"))?;
+        let osv = self.os_version().ok_or(generic_err("no system version"))?;
+        let k = self.name().ok_or(generic_err("no system name"))?;
+        let kv = self
+            .kernel_version()
+            .ok_or(generic_err("no kernel version"))?;
         Ok(format!("{} {} with {} {}", os, osv, k, kv))
     }
 
-    fn uptime(&self) -> Result<Duration> {
+    fn uptime(&self) -> BackendResult<Duration> {
         Ok(Duration::from_secs(SystemExt::uptime(self)))
     }
 
-    fn cpu_count(&self) -> Result<u32> {
+    fn cpu_count(&self) -> BackendResult<u32> {
         self.physical_core_count()
             .map(|s| s as u32)
-            .ok_or(anyhow!("CPU count unavailable"))
+            .ok_or(generic_err("CPU count unavailable"))
     }
 
-    fn logical_cpu_count(&self) -> Result<u32> {
+    fn logical_cpu_count(&self) -> BackendResult<u32> {
         Ok(self.cpus().len() as u32)
     }
 
-    fn global_cpu(&self) -> Result<CPU> {
+    fn global_cpu(&self) -> BackendResult<CPU> {
         Ok(CPU {
             utilization: self.global_cpu_info().cpu_usage() / 100.0,
         })
     }
 
-    fn memory(&self) -> Result<Memory> {
+    fn memory(&self) -> BackendResult<Memory> {
         let used = self.used_memory();
         let total = self.total_memory();
         let free = self.free_memory();
@@ -79,7 +80,7 @@ impl MonitorBackend for System {
         })
     }
 
-    fn swap(&self) -> Result<Swap> {
+    fn swap(&self) -> BackendResult<Swap> {
         Ok(Swap {
             used: self.used_swap(),
             free: self.free_swap(),
@@ -87,7 +88,7 @@ impl MonitorBackend for System {
         })
     }
 
-    fn load_avg(&self) -> Result<LoadAvg> {
+    fn load_avg(&self) -> BackendResult<LoadAvg> {
         let la = self.load_average();
         Ok(LoadAvg {
             one: la.one as f32,
@@ -96,7 +97,7 @@ impl MonitorBackend for System {
         })
     }
 
-    fn processes<'a>(&'a self) -> Result<Vec<Process>> {
+    fn processes<'a>(&'a self) -> BackendResult<Vec<Process>> {
         let procs = SystemExt::processes(self);
         let mut out = Vec::with_capacity(procs.len());
         for proc in procs.values() {
@@ -135,17 +136,17 @@ impl MonitorBackend for System {
         Ok(out)
     }
 
-    fn process_cmd_info(&self, pid: u32) -> Result<ProcessCommandInfo> {
+    fn process_cmd_info(&self, pid: u32) -> BackendResult<ProcessCommandInfo> {
         let procs = SystemExt::processes(self);
         let pid = PidExt::from_u32(pid);
-        let proc = procs.get(&pid).ok_or(anyhow!("missing process"))?;
+        let proc = procs.get(&pid).ok_or(generic_err("missing process"))?;
         Ok(ProcessCommandInfo {
             exe: proc.exe().to_string_lossy().into(),
             cmdline: proc.cmd().into(),
         })
     }
 
-    fn networks(&self) -> Result<Vec<NetworkStats>> {
+    fn networks(&self) -> BackendResult<Vec<NetworkStats>> {
         let nets = SystemExt::networks(self);
         Ok(nets
             .into_iter()
@@ -159,7 +160,7 @@ impl MonitorBackend for System {
             .collect())
     }
 
-    fn filesystems(&self) -> Result<Vec<Filesystem>> {
+    fn filesystems(&self) -> BackendResult<Vec<Filesystem>> {
         let disks = SystemExt::disks(self);
         Ok(disks
             .into_iter()

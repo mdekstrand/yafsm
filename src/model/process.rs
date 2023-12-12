@@ -1,9 +1,7 @@
 //! Process data model.
 use std::{cell::RefCell, cmp::Ordering, ops::Deref, time::Duration};
 
-use anyhow::Result;
-
-use crate::backend::MonitorBackend;
+use crate::backend::{BackendResult, MonitorBackend};
 
 use super::{MonitorState, SystemResources};
 
@@ -58,7 +56,10 @@ pub struct ProcessCommandInfo {
 }
 
 impl ProcessList {
-    pub(super) fn create<'a, B>(state: &'a MonitorState<B>, procs: Vec<Process>) -> Result<Self>
+    pub(super) fn create<'a, B>(
+        state: &'a MonitorState<B>,
+        procs: Vec<Process>,
+    ) -> BackendResult<Self>
     where
         B: MonitorBackend,
     {

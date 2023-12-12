@@ -1,4 +1,5 @@
 use super::*;
+use crate::backend::BackendResult as Result;
 
 pub trait SystemInfo {
     /// Get the hostname.

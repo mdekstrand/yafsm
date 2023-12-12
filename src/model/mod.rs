@@ -25,7 +25,7 @@ pub use options::Options;
 pub use process::{ProcSortOrder, Process, ProcessCommandInfo};
 pub use swap::Swap;
 
-use crate::backend::MonitorBackend;
+use crate::backend::{BackendResult, MonitorBackend};
 
 use self::process::ProcessList;
 pub use self::source::{NetworkInfo, RunningProcesses, StorageInfo, SystemInfo, SystemResources};
@@ -64,7 +64,7 @@ where
         })
     }
 
-    pub fn refresh(&mut self) -> Result<()> {
+    pub fn refresh(&mut self) -> BackendResult<()> {
         self.backend.update(&self.options)
     }
 }
@@ -87,15 +87,15 @@ impl<B> SystemInfo for MonitorState<B>
 where
     B: MonitorBackend,
 {
-    fn hostname(&self) -> Result<String> {
+    fn hostname(&self) -> BackendResult<String> {
         self.backend.hostname()
     }
 
-    fn system_version(&self) -> Result<String> {
+    fn system_version(&self) -> BackendResult<String> {
         self.backend.system_version()
     }
 
-    fn uptime(&self) -> Result<Duration> {
+    fn uptime(&self) -> BackendResult<Duration> {
         self.backend.uptime()
     }
 }
@@ -104,23 +104,23 @@ impl<B> SystemResources for MonitorState<B>
 where
     B: MonitorBackend,
 {
-    fn cpu_count(&self) -> Result<u32> {
+    fn cpu_count(&self) -> BackendResult<u32> {
         self.backend.cpu_count()
     }
 
-    fn global_cpu(&self) -> Result<CPU> {
+    fn global_cpu(&self) -> BackendResult<CPU> {
         self.backend.global_cpu()
     }
 
-    fn memory(&self) -> Result<Memory> {
+    fn memory(&self) -> BackendResult<Memory> {
         self.backend.memory()
     }
 
-    fn swap(&self) -> Result<Swap> {
+    fn swap(&self) -> BackendResult<Swap> {
         self.backend.swap()
     }
 
-    fn load_avg(&self) -> Result<LoadAvg> {
+    fn load_avg(&self) -> BackendResult<LoadAvg> {
         self.backend.load_avg()
     }
 }
@@ -129,11 +129,11 @@ impl<B> RunningProcesses for MonitorState<B>
 where
     B: MonitorBackend,
 {
-    fn processes(&self) -> Result<ProcessList> {
+    fn processes(&self) -> BackendResult<ProcessList> {
         ProcessList::create(self, self.backend.processes()?)
     }
 
-    fn process_cmd_info(&self, pid: u32) -> Result<ProcessCommandInfo> {
+    fn process_cmd_info(&self, pid: u32) -> BackendResult<ProcessCommandInfo> {
         self.backend.process_cmd_info(pid)
     }
 }
@@ -142,7 +142,7 @@ impl<B> NetworkInfo for MonitorState<B>
 where
     B: MonitorBackend,
 {
-    fn networks(&self) -> Result<Vec<NetworkStats>> {
+    fn networks(&self) -> BackendResult<Vec<NetworkStats>> {
         self.backend.networks()
     }
 }
@@ -151,7 +151,7 @@ impl<B> StorageInfo for MonitorState<B>
 where
     B: MonitorBackend,
 {
-    fn filesystems(&self) -> Result<Vec<Filesystem>> {
+    fn filesystems(&self) -> BackendResult<Vec<Filesystem>> {
         self.backend.filesystems()
     }
 }
