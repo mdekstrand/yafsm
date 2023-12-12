@@ -1,7 +1,7 @@
 use std::{path::PathBuf, time::Duration};
 
 use anyhow::Result;
-use backend::sysmon;
+use backend::sysinfo::{self, SysInfoBackend};
 use clap::{ArgAction, Parser};
 use log::*;
 
@@ -58,7 +58,7 @@ fn main() -> Result<()> {
     let mut options = Options::default();
     options.refresh = Duration::from_secs_f32(cli.refresh);
 
-    let backend = sysmon::initialize()?;
+    let backend = SysInfoBackend::create()?;
 
     let mut state = MonitorState::create(options, backend)?;
 

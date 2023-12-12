@@ -4,7 +4,8 @@ use std::time::Duration;
 use crate::model::*;
 
 pub mod error;
-pub mod sysmon;
+pub mod sysinfo;
+pub mod util;
 
 pub use error::{BackendError, BackendResult};
 

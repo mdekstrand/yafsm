@@ -23,6 +23,29 @@ pub enum BackendError {
 
 pub type BackendResult<T> = Result<T, BackendError>;
 
+pub trait BackendErrorFilter<T> {
+    /// Convert “acceptable” errors (missing/inaccessible data, as opposed to
+    /// system errors retrieving data) into an `Ok(None)`.  The acceptable
+    /// errors are:
+    ///
+    /// - [BackendError::NotSupported]
+    /// - [BackendError::NotFound]
+    /// - [BackendError::NotAllowed]
+    fn acceptable_to_opt(self) -> BackendResult<Option<T>>;
+}
+
+impl<T> BackendErrorFilter<T> for BackendResult<T> {
+    fn acceptable_to_opt(self) -> BackendResult<Option<T>> {
+        match self {
+            Ok(r) => Ok(Some(r)),
+            Err(BackendError::NotSupported | BackendError::NotFound | BackendError::NotAllowed) => {
+                Ok(None)
+            }
+            Err(e) => Err(e),
+        }
+    }
+}
+
 impl From<io::Error> for BackendError {
     fn from(err: io::Error) -> Self {
         match err.kind() {

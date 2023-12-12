@@ -11,15 +11,27 @@ use sysinfo::{
 
 use crate::model::*;
 
-use super::{error::generic_err, BackendResult, MonitorBackend};
+use super::{error::generic_err, util::RefreshRecord, BackendResult, MonitorBackend};
 
-pub fn initialize() -> BackendResult<System> {
-    let mut sys = System::new();
-    sys.refresh_specifics(RefreshKind::everything());
-    Ok(sys)
+/// Backend using [sysinfo].
+pub struct SysInfoBackend {
+    system: System,
+    clock: RefreshRecord,
 }
 
-impl MonitorBackend for System {
+impl SysInfoBackend {
+    /// Create a new backend.
+    pub fn create() -> BackendResult<SysInfoBackend> {
+        let mut system = System::new();
+        system.refresh_specifics(RefreshKind::everything());
+        Ok(SysInfoBackend {
+            system,
+            clock: RefreshRecord::new(),
+        })
+    }
+}
+
+impl MonitorBackend for SysInfoBackend {
     fn update(&mut self, _opts: &Options) -> BackendResult<()> {
         debug!("refreshing system");
         let specs = RefreshKind::new()
@@ -29,49 +41,55 @@ impl MonitorBackend for System {
             .with_networks()
             .with_disks_list()
             .with_disks();
-        self.refresh_specifics(specs);
+        self.system.refresh_specifics(specs);
+        self.clock.update();
         Ok(())
     }
 
     fn hostname(&self) -> BackendResult<String> {
-        self.host_name().ok_or(generic_err("no host name"))
+        self.system.host_name().ok_or(generic_err("no host name"))
     }
 
     fn system_version(&self) -> BackendResult<String> {
-        let os = self.distribution_id();
-        let osv = self.os_version().ok_or(generic_err("no system version"))?;
-        let k = self.name().ok_or(generic_err("no system name"))?;
+        let os = self.system.distribution_id();
+        let osv = self
+            .system
+            .os_version()
+            .ok_or(generic_err("no system version"))?;
+        let k = self.system.name().ok_or(generic_err("no system name"))?;
         let kv = self
+            .system
             .kernel_version()
             .ok_or(generic_err("no kernel version"))?;
         Ok(format!("{} {} with {} {}", os, osv, k, kv))
     }
 
     fn uptime(&self) -> BackendResult<Duration> {
-        Ok(Duration::from_secs(SystemExt::uptime(self)))
+        Ok(Duration::from_secs(self.system.uptime()))
     }
 
     fn cpu_count(&self) -> BackendResult<u32> {
-        self.physical_core_count()
+        self.system
+            .physical_core_count()
             .map(|s| s as u32)
             .ok_or(generic_err("CPU count unavailable"))
     }
 
     fn logical_cpu_count(&self) -> BackendResult<u32> {
-        Ok(self.cpus().len() as u32)
+        Ok(self.system.cpus().len() as u32)
     }
 
     fn global_cpu(&self) -> BackendResult<CPU> {
         Ok(CPU {
-            utilization: self.global_cpu_info().cpu_usage() / 100.0,
+            utilization: self.system.global_cpu_info().cpu_usage() / 100.0,
         })
     }
 
     fn memory(&self) -> BackendResult<Memory> {
-        let used = self.used_memory();
-        let total = self.total_memory();
-        let free = self.free_memory();
-        let freeable = self.available_memory().saturating_sub(free);
+        let used = self.system.used_memory();
+        let total = self.system.total_memory();
+        let free = self.system.free_memory();
+        let freeable = self.system.available_memory().saturating_sub(free);
         Ok(Memory {
             used,
             freeable,
@@ -82,14 +100,14 @@ impl MonitorBackend for System {
 
     fn swap(&self) -> BackendResult<Swap> {
         Ok(Swap {
-            used: self.used_swap(),
-            free: self.free_swap(),
-            total: self.total_swap(),
+            used: self.system.used_swap(),
+            free: self.system.free_swap(),
+            total: self.system.total_swap(),
         })
     }
 
     fn load_avg(&self) -> BackendResult<LoadAvg> {
-        let la = self.load_average();
+        let la = self.system.load_average();
         Ok(LoadAvg {
             one: la.one as f32,
             five: la.five as f32,
@@ -98,7 +116,7 @@ impl MonitorBackend for System {
     }
 
     fn processes<'a>(&'a self) -> BackendResult<Vec<Process>> {
-        let procs = SystemExt::processes(self);
+        let procs = self.system.processes();
         let mut out = Vec::with_capacity(procs.len());
         for proc in procs.values() {
             let disk = proc.disk_usage();
@@ -129,15 +147,15 @@ impl MonitorBackend for System {
                 mem_util: proc.memory() as f32 / self.memory()?.total as f32,
                 mem_rss: proc.memory(),
                 mem_virt: proc.virtual_memory(),
-                io_read: Some(disk.read_bytes),
-                io_write: Some(disk.written_bytes),
+                io_read: Some(self.clock.norm_u64(disk.read_bytes)),
+                io_write: Some(self.clock.norm_u64(disk.written_bytes)),
             })
         }
         Ok(out)
     }
 
     fn process_cmd_info(&self, pid: u32) -> BackendResult<ProcessCommandInfo> {
-        let procs = SystemExt::processes(self);
+        let procs = self.system.processes();
         let pid = PidExt::from_u32(pid);
         let proc = procs.get(&pid).ok_or(generic_err("missing process"))?;
         Ok(ProcessCommandInfo {
@@ -147,21 +165,21 @@ impl MonitorBackend for System {
     }
 
     fn networks(&self) -> BackendResult<Vec<NetworkStats>> {
-        let nets = SystemExt::networks(self);
+        let nets = self.system.networks();
         Ok(nets
             .into_iter()
             .map(|(name, stats)| NetworkStats {
                 name: name.clone(),
-                rx_bytes: stats.received(),
-                tx_bytes: stats.transmitted(),
-                rx_packets: stats.packets_received(),
-                tx_packets: stats.packets_transmitted(),
+                rx_bytes: self.clock.norm_u64(stats.received()),
+                tx_bytes: self.clock.norm_u64(stats.transmitted()),
+                rx_packets: self.clock.norm_u64(stats.packets_received()),
+                tx_packets: self.clock.norm_u64(stats.packets_transmitted()),
             })
             .collect())
     }
 
     fn filesystems(&self) -> BackendResult<Vec<Filesystem>> {
-        let disks = SystemExt::disks(self);
+        let disks = self.system.disks();
         Ok(disks
             .into_iter()
             .map(|d| Filesystem {
