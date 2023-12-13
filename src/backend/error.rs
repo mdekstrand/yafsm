@@ -73,6 +73,19 @@ impl From<ProcError> for BackendError {
     }
 }
 
+#[cfg(target_os = "linux")]
+impl From<etc_os_release::Error> for BackendError {
+    fn from(err: etc_os_release::Error) -> Self {
+        use etc_os_release::Error;
+        match err {
+            Error::NoOsRelease => BackendError::NotSupported,
+            Error::Open { err, .. } => BackendError::IOError(err.kind()),
+            Error::Read { err } => BackendError::IOError(err.kind()),
+            _ => generic_err("unknown OS release error"),
+        }
+    }
+}
+
 /// Create a generic backend error.
 pub(super) fn generic_err<S: AsRef<str>>(msg: S) -> BackendError {
     BackendError::Other(msg.as_ref().to_string())

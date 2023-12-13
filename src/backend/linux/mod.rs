@@ -1,26 +1,28 @@
 //! Linux-specific backend with [procfs].
-use etc_os_release::{Error as EORError, OsRelease};
+use etc_os_release::OsRelease;
 use gethostname::gethostname;
 use procfs::*;
 
-use super::{error::*, MonitorBackend};
+mod kernel;
+
+use super::{error::*, util::Tick, MonitorBackend};
 
 /// Linux-specific backend.
 pub struct LinuxBackend {
-    tick: u64,
+    tick: Tick,
     release: BackendResult<OsRelease>,
+    cpus: BackendResult<CpuInfo>,
+    kernel: kernel::Stats,
 }
 
 impl LinuxBackend {
     pub fn create() -> BackendResult<LinuxBackend> {
+        let tick = Tick::new();
         Ok(LinuxBackend {
-            tick: 0,
-            release: OsRelease::open().map_err(|e| match e {
-                EORError::NoOsRelease => BackendError::NotSupported,
-                EORError::Open { err, .. } => BackendError::IOError(err.kind()),
-                EORError::Read { err } => BackendError::IOError(err.kind()),
-                _ => generic_err("unknown OS release error"),
-            }),
+            tick: tick.clone(),
+            release: OsRelease::open().map_err(|e| e.into()),
+            cpus: CpuInfo::current().map_err(|e| e.into()),
+            kernel: kernel::Stats::new(tick.clone()),
         })
     }
 }
@@ -39,7 +41,7 @@ impl LinuxBackend {
 
 impl MonitorBackend for LinuxBackend {
     fn update(&mut self, _opts: &crate::model::Options) -> BackendResult<()> {
-        self.tick += 1;
+        self.tick.advance();
         Ok(())
     }
 
@@ -57,11 +59,12 @@ impl MonitorBackend for LinuxBackend {
     }
 
     fn cpu_count(&self) -> BackendResult<u32> {
-        Err(BackendError::NotSupported)
+        // TODO: fix this to get physical cores
+        self.map_result(&self.cpus, |cpui| cpui.num_cores() as u32)
     }
 
     fn logical_cpu_count(&self) -> BackendResult<u32> {
-        Err(BackendError::NotSupported)
+        self.map_result(&self.cpus, |cpui| cpui.num_cores() as u32)
     }
 
     fn global_cpu(&self) -> BackendResult<crate::model::CPU> {
