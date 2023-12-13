@@ -17,8 +17,8 @@ impl LinuxBackend {
             tick: 0,
             release: OsRelease::open().map_err(|e| match e {
                 EORError::NoOsRelease => BackendError::NotSupported,
-                EORError::Open { err, .. } => BackendError::IOError(err),
-                EORError::Read { err } => BackendError::IOError(err),
+                EORError::Open { err, .. } => BackendError::IOError(err.kind()),
+                EORError::Read { err } => BackendError::IOError(err.kind()),
                 _ => generic_err("unknown OS release error"),
             }),
         })
@@ -36,7 +36,10 @@ impl MonitorBackend for LinuxBackend {
     }
 
     fn system_version(&self) -> BackendResult<String> {
-        self.release.map(|osr| osr.pretty_name().into())
+        self.release
+            .as_ref()
+            .map(|osr| osr.pretty_name().into())
+            .map_err(|e| e.clone())
     }
 
     fn uptime(&self) -> BackendResult<std::time::Duration> {

@@ -26,7 +26,7 @@ fn handle_panic(pi: &PanicInfo<'_>) {
 
 pub fn with_terminal<F, T>(func: F) -> Result<T>
 where
-    F: FnOnce(&mut Terminal<CrosstermBackend<Stdout>>) -> Result<T> + UnwindSafe,
+    F: FnOnce(&mut Terminal<CrosstermBackend<Stdout>>) -> Result<T>,
 {
     panic::set_hook(Box::new(handle_panic));
     enable_raw_mode()?;

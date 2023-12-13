@@ -5,7 +5,7 @@ use std::io::{self, ErrorKind};
 use procfs::ProcError;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone)]
 pub enum BackendError {
     #[error("operation not supported")]
     NotSupported,
@@ -17,7 +17,7 @@ pub enum BackendError {
     NotAllowed,
 
     #[error("IO error: {0}")]
-    IOError(io::Error),
+    IOError(io::ErrorKind),
 
     #[error("unknown error: {0}")]
     Other(String),
@@ -53,7 +53,7 @@ impl From<io::Error> for BackendError {
         match err.kind() {
             ErrorKind::PermissionDenied => Self::NotAllowed,
             ErrorKind::NotFound => Self::NotFound,
-            _ => Self::IOError(err),
+            k => Self::IOError(k),
         }
     }
 }
@@ -64,7 +64,7 @@ impl From<ProcError> for BackendError {
         match err {
             ProcError::NotFound(_) => Self::NotFound,
             ProcError::PermissionDenied(_) => Self::NotAllowed,
-            ProcError::Io(e, _) => Self::IOError(e),
+            ProcError::Io(e, _) => Self::IOError(e.kind()),
             ProcError::Incomplete(Some(p)) => Self::Other(format!("{:?} incomplete", p)),
             ProcError::Incomplete(None) => Self::Other("incomplete file".into()),
             ProcError::InternalError(e) => Self::Other(format!("internal procfs error: {}", e)),
