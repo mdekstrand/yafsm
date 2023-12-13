@@ -1,7 +1,7 @@
 use std::{path::PathBuf, time::Duration};
 
 use anyhow::Result;
-use backend::sysinfo::{self, SysInfoBackend};
+use backend::sysinfo::SysInfoBackend;
 use clap::{ArgAction, Parser};
 use log::*;
 
