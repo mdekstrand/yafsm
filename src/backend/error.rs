@@ -1,6 +1,7 @@
 //! Backend errors.
 use std::io::{self, ErrorKind};
 
+#[cfg(target_os = "linux")]
 use procfs::ProcError;
 use thiserror::Error;
 
@@ -57,6 +58,7 @@ impl From<io::Error> for BackendError {
     }
 }
 
+#[cfg(target_os = "linux")]
 impl From<ProcError> for BackendError {
     fn from(err: ProcError) -> Self {
         match err {
