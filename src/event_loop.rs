@@ -15,10 +15,9 @@ struct Clock {
     now: SystemTime,
 }
 
-pub fn run_event_loop<TB, SB>(term: &mut Terminal<TB>, state: &mut MonitorState<SB>) -> Result<()>
+pub fn run_event_loop<'b, TB>(term: &mut Terminal<TB>, state: &mut MonitorState<'b>) -> Result<()>
 where
     TB: Backend,
-    SB: MonitorBackend,
 {
     let mut clock = Clock::new();
     term.clear()?;

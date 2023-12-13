@@ -15,7 +15,7 @@ use banner::render_banner;
 use quicklook::render_quicklook;
 use summaries::*;
 
-use crate::{backend::MonitorBackend, model::MonitorState};
+use crate::model::MonitorState;
 
 use self::{
     iotables::{render_filesystems, render_network},
@@ -36,10 +36,7 @@ enum HeaderBlock {
     },
 }
 
-pub fn render_dashboard<B>(frame: &mut Frame, state: &MonitorState<B>) -> Result<()>
-where
-    B: MonitorBackend,
-{
+pub fn render_dashboard<'b>(frame: &mut Frame, state: &MonitorState<'b>) -> Result<()> {
     let layout = Layout::new(
         Direction::Vertical,
         [

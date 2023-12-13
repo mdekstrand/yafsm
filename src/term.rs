@@ -2,7 +2,7 @@
 use std::{
     backtrace::{Backtrace, BacktraceStatus},
     io::{stdout, Stdout},
-    panic::{self, PanicInfo, UnwindSafe},
+    panic::{self, PanicInfo},
 };
 
 use anyhow::Result;

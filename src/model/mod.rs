@@ -43,19 +43,19 @@ pub trait MonitorData:
 }
 
 /// Container for system monitor state.
-pub struct MonitorState<B: MonitorBackend> {
+pub struct MonitorState<'back> {
     pub options: Options,
-    pub backend: B,
+    pub backend: &'back mut dyn MonitorBackend,
     /// Sort order for processes.  [None] to sort automatically.
     pub proc_sort: Option<ProcSortOrder>,
     pub user_db: UsersCache,
 }
 
-impl<B> MonitorState<B>
-where
-    B: MonitorBackend,
-{
-    pub fn create(options: Options, backend: B) -> Result<MonitorState<B>> {
+impl<'back> MonitorState<'back> {
+    pub fn create(
+        options: Options,
+        backend: &'back mut dyn MonitorBackend,
+    ) -> Result<MonitorState<'back>> {
         Ok(MonitorState {
             options,
             backend,
@@ -69,12 +69,9 @@ where
     }
 }
 
-impl<B> MonitorData for MonitorState<B>
-where
-    B: MonitorBackend,
-{
+impl<'back> MonitorData for MonitorState<'back> {
     fn backend(&self) -> &dyn MonitorBackend {
-        &self.backend
+        self.backend
     }
 
     fn lookup_user(&self, uid: u32) -> Result<Option<String>> {
@@ -83,10 +80,7 @@ where
     }
 }
 
-impl<B> SystemInfo for MonitorState<B>
-where
-    B: MonitorBackend,
-{
+impl<'back> SystemInfo for MonitorState<'back> {
     fn hostname(&self) -> BackendResult<String> {
         self.backend.hostname()
     }
@@ -100,10 +94,7 @@ where
     }
 }
 
-impl<B> SystemResources for MonitorState<B>
-where
-    B: MonitorBackend,
-{
+impl<'back> SystemResources for MonitorState<'back> {
     fn cpu_count(&self) -> BackendResult<u32> {
         self.backend.cpu_count()
     }
@@ -125,10 +116,7 @@ where
     }
 }
 
-impl<B> RunningProcesses for MonitorState<B>
-where
-    B: MonitorBackend,
-{
+impl<'back> RunningProcesses for MonitorState<'back> {
     fn processes(&self) -> BackendResult<ProcessList> {
         ProcessList::create(self, self.backend.processes()?)
     }
@@ -138,19 +126,13 @@ where
     }
 }
 
-impl<B> NetworkInfo for MonitorState<B>
-where
-    B: MonitorBackend,
-{
+impl<'back> NetworkInfo for MonitorState<'back> {
     fn networks(&self) -> BackendResult<Vec<NetworkStats>> {
         self.backend.networks()
     }
 }
 
-impl<B> StorageInfo for MonitorState<B>
-where
-    B: MonitorBackend,
-{
+impl<'back> StorageInfo for MonitorState<'back> {
     fn filesystems(&self) -> BackendResult<Vec<Filesystem>> {
         self.backend.filesystems()
     }

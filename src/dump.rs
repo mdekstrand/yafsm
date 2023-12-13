@@ -33,10 +33,7 @@ impl DumpOpts {
         !self.dumps.is_empty()
     }
 
-    pub fn dump<B>(&self, state: &mut MonitorState<B>) -> Result<()>
-    where
-        B: MonitorBackend,
-    {
+    pub fn dump<'b>(&self, state: &mut MonitorState<'b>) -> Result<()> {
         let wait = Duration::from_millis(self.dump_wait);
         debug!("waiting {} to refresh", friendly::duration(wait));
         sleep(wait);

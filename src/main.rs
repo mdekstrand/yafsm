@@ -1,7 +1,6 @@
 use std::{path::PathBuf, time::Duration};
 
 use anyhow::Result;
-use backend::DefaultBackend;
 use clap::{ArgAction, Parser};
 use log::*;
 
@@ -13,6 +12,10 @@ mod model;
 mod term;
 mod view;
 
+#[cfg(target_os = "linux")]
+use backend::linux::LinuxBackend;
+use backend::sysinfo::SysInfoBackend;
+use backend::MonitorBackend;
 use dump::DumpOpts;
 use event_loop::run_event_loop;
 use model::{MonitorState, Options};
@@ -33,12 +36,30 @@ struct CLIOptions {
     #[arg(short = 'r', long = "refresh", default_value = "3")]
     refresh: f32,
 
+    /// Use fallback sysinfo backend.
+    #[cfg(target_os = "linux")]
+    #[arg(long = "sysinfo")]
+    sysinfo: bool,
+
     #[command(flatten)]
     dump: DumpOpts,
 }
 
 fn main() -> Result<()> {
     let cli = CLIOptions::parse();
+    init_logging(&cli)?;
+
+    let mut options = Options::default();
+    options.refresh = Duration::from_secs_f32(cli.refresh);
+
+    let mut backend = create_backend(&cli)?;
+    let state = MonitorState::create(options, backend.as_mut())?;
+    run_monitor(&cli, state)?;
+
+    Ok(())
+}
+
+fn init_logging(cli: &CLIOptions) -> Result<()> {
     logging::initialize(
         cli.log_file.as_ref(),
         if cli.dump.requested() {
@@ -54,20 +75,31 @@ fn main() -> Result<()> {
             LevelFilter::Info
         },
     )?;
+    Ok(())
+}
 
-    let mut options = Options::default();
-    options.refresh = Duration::from_secs_f32(cli.refresh);
-
-    let backend = DefaultBackend::create()?;
-
-    let mut state = MonitorState::create(options, backend)?;
+fn run_monitor<'b>(cli: &CLIOptions, state: MonitorState<'b>) -> Result<()> {
+    let mut state = state;
 
     if cli.dump.requested() {
         cli.dump.dump(&mut state)?;
         return Ok(());
     }
 
-    with_terminal(move |term| run_event_loop(term, &mut state))?;
+    with_terminal(move |term| run_event_loop(term, &mut state))
+}
 
-    Ok(())
+#[cfg(target_os = "linux")]
+fn create_backend(cli: &CLIOptions) -> Result<Box<dyn MonitorBackend>> {
+    let backend: Box<dyn MonitorBackend> = if cli.sysinfo {
+        Box::new(SysInfoBackend::create()?)
+    } else {
+        Box::new(LinuxBackend::create()?)
+    };
+    Ok(backend)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn create_backend(_cli: &CLIOptions) -> Result<SysInfoBackend> {
+    SysInfoBackend::create()
 }

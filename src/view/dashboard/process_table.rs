@@ -7,7 +7,6 @@ use ratatui::{
 };
 
 use crate::{
-    backend::MonitorBackend,
     model::{process::ProcessList, *},
     view::util::{fmt_bytes, fmt_duration, fmt_int_bytes},
 };
@@ -133,10 +132,11 @@ static COLUMNS: &[PTColumn] = &[
         }),
 ];
 
-pub fn render_process_table<B>(frame: &mut Frame, state: &MonitorState<B>, area: Rect) -> Result<()>
-where
-    B: MonitorBackend,
-{
+pub fn render_process_table<'b>(
+    frame: &mut Frame,
+    state: &MonitorState<'b>,
+    area: Rect,
+) -> Result<()> {
     let mut procs = state.processes()?;
     procs.sort();
 
@@ -156,15 +156,12 @@ where
     Ok(())
 }
 
-fn render_headline<B>(
-    state: &MonitorState<B>,
+fn render_headline<'b>(
+    state: &MonitorState<'b>,
     procs: &ProcessList,
     frame: &mut Frame,
     area: Rect,
-) -> Result<()>
-where
-    B: MonitorBackend,
-{
+) -> Result<()> {
     let counts = procs.counts();
     let hl = Line::from(vec![
         Span::from("TASKS").bold(),
@@ -192,15 +189,12 @@ where
     Ok(())
 }
 
-fn render_table<B>(
-    state: &MonitorState<B>,
+fn render_table<'b>(
+    state: &MonitorState<'b>,
     procs: &ProcessList,
     frame: &mut Frame,
     area: Rect,
-) -> Result<()>
-where
-    B: MonitorBackend,
-{
+) -> Result<()> {
     debug!("proctbl: rendering {} processes in {:?}", procs.len(), area);
     let mut rows = Vec::with_capacity(procs.len());
     for proc in procs.iter() {
@@ -239,10 +233,7 @@ where
     Ok(())
 }
 
-fn process_row<'a, B>(state: &MonitorState<B>, proc: &Process) -> Result<Row<'a>>
-where
-    B: MonitorBackend,
-{
+fn process_row<'a, 'b>(state: &MonitorState<'b>, proc: &Process) -> Result<Row<'a>> {
     let mut cells = Vec::with_capacity(COLUMNS.len());
     for col in COLUMNS {
         if !col.enabled(state) {
