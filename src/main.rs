@@ -1,7 +1,7 @@
 use std::{path::PathBuf, time::Duration};
 
 use anyhow::Result;
-use backend::sysinfo::SysInfoBackend;
+use backend::DefaultBackend;
 use clap::{ArgAction, Parser};
 use log::*;
 
@@ -58,7 +58,7 @@ fn main() -> Result<()> {
     let mut options = Options::default();
     options.refresh = Duration::from_secs_f32(cli.refresh);
 
-    let backend = SysInfoBackend::create()?;
+    let backend = DefaultBackend::create()?;
 
     let mut state = MonitorState::create(options, backend)?;
 

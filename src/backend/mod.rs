@@ -11,6 +11,11 @@ pub mod util;
 
 pub use error::{BackendError, BackendResult};
 
+#[cfg(target_os = "linux")]
+pub use linux::LinuxBackend as DefaultBackend;
+#[cfg(not(target_os = "linux"))]
+pub use sysinfo::SysInfoBackend as DefaultBackend;
+
 /// Trait implemented by backend implementations.
 pub trait MonitorBackend {
     /// Refresh the system status data.
