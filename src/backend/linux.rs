@@ -28,9 +28,12 @@ impl LinuxBackend {
 impl LinuxBackend {
     fn map_result<T, R, F>(&self, result: &BackendResult<T>, func: F) -> BackendResult<R>
     where
-        F: Fn(&T) -> R,
+        F: FnOnce(&T) -> R,
     {
-        result.map(func).map_err(|e| e.clone())
+        match result {
+            Ok(v) => Ok(func(v)),
+            Err(e) => Err(e.clone()),
+        }
     }
 }
 
