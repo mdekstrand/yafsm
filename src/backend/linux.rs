@@ -25,6 +25,15 @@ impl LinuxBackend {
     }
 }
 
+impl LinuxBackend {
+    fn map_result<T, R, F>(&self, result: &BackendResult<T>, func: F) -> BackendResult<R>
+    where
+        F: Fn(&T) -> R,
+    {
+        result.map(func).map_err(|e| e.clone())
+    }
+}
+
 impl MonitorBackend for LinuxBackend {
     fn update(&mut self, _opts: &crate::model::Options) -> BackendResult<()> {
         self.tick += 1;
@@ -36,10 +45,7 @@ impl MonitorBackend for LinuxBackend {
     }
 
     fn system_version(&self) -> BackendResult<String> {
-        self.release
-            .as_ref()
-            .map(|osr| osr.pretty_name().into())
-            .map_err(|e| e.clone())
+        self.map_result(&self.release, |osr| osr.pretty_name().into())
     }
 
     fn uptime(&self) -> BackendResult<std::time::Duration> {
