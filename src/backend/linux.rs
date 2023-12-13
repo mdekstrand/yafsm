@@ -1,4 +1,5 @@
 //! Linux-specific backend with [procfs].
+use etc_os_release::{Error as EORError, OsRelease};
 use gethostname::gethostname;
 use procfs::*;
 
@@ -7,11 +8,20 @@ use super::{error::*, MonitorBackend};
 /// Linux-specific backend.
 pub struct LinuxBackend {
     tick: u64,
+    release: BackendResult<OsRelease>,
 }
 
 impl LinuxBackend {
     pub fn create() -> BackendResult<LinuxBackend> {
-        Ok(LinuxBackend { tick: 0 })
+        Ok(LinuxBackend {
+            tick: 0,
+            release: OsRelease::open().map_err(|e| match e {
+                EORError::NoOsRelease => BackendError::NotSupported,
+                EORError::Open { err, .. } => BackendError::IOError(err),
+                EORError::Read { err } => BackendError::IOError(err),
+                _ => generic_err("unknown OS release error"),
+            }),
+        })
     }
 }
 
@@ -26,7 +36,7 @@ impl MonitorBackend for LinuxBackend {
     }
 
     fn system_version(&self) -> BackendResult<String> {
-        Err(BackendError::NotSupported)
+        self.release.map(|osr| osr.pretty_name().into())
     }
 
     fn uptime(&self) -> BackendResult<std::time::Duration> {
