@@ -4,6 +4,8 @@ use std::time::Duration;
 use crate::model::*;
 
 pub mod error;
+#[cfg(target_os = "linux")]
+pub mod linux;
 pub mod sysinfo;
 pub mod util;
 

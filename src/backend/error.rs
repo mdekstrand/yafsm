@@ -1,6 +1,7 @@
 //! Backend errors.
 use std::io::{self, ErrorKind};
 
+use procfs::ProcError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -52,6 +53,20 @@ impl From<io::Error> for BackendError {
             ErrorKind::PermissionDenied => Self::NotAllowed,
             ErrorKind::NotFound => Self::NotFound,
             _ => Self::IOError(err),
+        }
+    }
+}
+
+impl From<ProcError> for BackendError {
+    fn from(err: ProcError) -> Self {
+        match err {
+            ProcError::NotFound(_) => Self::NotFound,
+            ProcError::PermissionDenied(_) => Self::NotAllowed,
+            ProcError::Io(e, _) => Self::IOError(e),
+            ProcError::Incomplete(Some(p)) => Self::Other(format!("{:?} incomplete", p)),
+            ProcError::Incomplete(None) => Self::Other("incomplete file".into()),
+            ProcError::InternalError(e) => Self::Other(format!("internal procfs error: {}", e)),
+            ProcError::Other(s) => Self::Other(s),
         }
     }
 }

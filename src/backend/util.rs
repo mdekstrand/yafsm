@@ -1,6 +1,11 @@
 //! Backend utility functions and modules.
 
-use std::time::{Duration, Instant};
+use std::{
+    cell::RefCell,
+    time::{Duration, Instant},
+};
+
+use super::error::BackendResult;
 
 /// Struct to record time between refreshes.
 pub(super) struct RefreshRecord {
@@ -44,5 +49,29 @@ impl RefreshRecord {
     pub fn norm_f64(&self, val: f64) -> f64 {
         let time = self.duration.as_secs_f64();
         val / time
+    }
+}
+
+pub trait RefreshableSource {
+    type Data;
+
+    fn update(&mut self) -> BackendResult<()>;
+
+    fn get(&self) -> BackendResult<Self::Data>;
+}
+
+#[derive(Default)]
+pub struct LazyRefresh<S: RefreshableSource> {
+    last_tick: RefCell<u64>,
+    source: RefCell<S>,
+}
+
+impl<S: RefreshableSource> LazyRefresh<S> {
+    pub fn get_data(&self, tick: u64) -> BackendResult<S::Data> {
+        if tick > *self.last_tick.borrow() {
+            self.source.borrow_mut().update()?;
+            *self.last_tick.borrow_mut() = tick;
+        }
+        self.source.borrow().get()
     }
 }
