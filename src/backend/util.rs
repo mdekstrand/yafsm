@@ -73,7 +73,7 @@ impl RefreshRecord {
 /// A reference to a tick for tracking updates.  Cloning the tick
 /// creates another refrence to the *same* tick.
 #[derive(Clone)]
-pub struct Tick {
+pub(super) struct Tick {
     tick: Rc<RefCell<u64>>,
 }
 
@@ -93,7 +93,7 @@ impl Tick {
     }
 }
 
-pub trait RefreshableSource {
+pub(super) trait RefreshableSource {
     /// Get the source's refresh record (only used internally).
     fn refresh_record(&mut self) -> &mut RefreshRecord;
 
