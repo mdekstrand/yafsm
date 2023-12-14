@@ -37,7 +37,6 @@ struct CLIOptions {
     refresh: f32,
 
     /// Use fallback sysinfo backend.
-    #[cfg(target_os = "linux")]
     #[arg(long = "sysinfo")]
     sysinfo: bool,
 
@@ -100,6 +99,6 @@ fn create_backend(cli: &CLIOptions) -> Result<Box<dyn MonitorBackend>> {
 }
 
 #[cfg(not(target_os = "linux"))]
-fn create_backend(_cli: &CLIOptions) -> Result<SysInfoBackend> {
-    SysInfoBackend::create()
+fn create_backend(_cli: &CLIOptions) -> Result<Box<SysInfoBackend>> {
+    Ok(Box::new(SysInfoBackend::create()?))
 }
