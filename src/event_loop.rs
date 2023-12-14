@@ -4,7 +4,8 @@ use anyhow::Result;
 use crossterm::event::{poll, read, Event, KeyCode, KeyEventKind};
 use ratatui::{backend::Backend, Terminal};
 
-use crate::{backend::MonitorBackend, model::MonitorState, view::render_screen};
+use crate::model::MonitorState;
+use crate::view::render_screen;
 
 const REFRESH_TOL: Duration = Duration::from_millis(50);
 

@@ -7,7 +7,6 @@ use clap::{Args, ValueEnum};
 use friendly::bytes;
 use log::*;
 
-use crate::backend::MonitorBackend;
 use crate::model::source::SystemInfo;
 use crate::model::*;
 
