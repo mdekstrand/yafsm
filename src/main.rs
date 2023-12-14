@@ -15,6 +15,7 @@ mod view;
 #[cfg(target_os = "linux")]
 use backend::linux::LinuxBackend;
 use backend::sysinfo::SysInfoBackend;
+#[cfg(target_os = "linux")]
 use backend::MonitorBackend;
 use dump::DumpOpts;
 use event_loop::run_event_loop;
