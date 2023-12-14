@@ -5,6 +5,7 @@ use std::io::{self, ErrorKind};
 use procfs::ProcError;
 use thiserror::Error;
 
+#[allow(dead_code)]
 #[derive(Error, Debug, Clone)]
 pub enum BackendError {
     #[error("operation not supported")]
