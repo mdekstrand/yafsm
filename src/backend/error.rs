@@ -11,6 +11,9 @@ pub enum BackendError {
     #[error("operation not supported")]
     NotSupported,
 
+    #[error("operation not currently available")]
+    NotAvailable,
+
     #[error("item not found")]
     NotFound,
 

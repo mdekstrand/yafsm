@@ -3,16 +3,19 @@ use etc_os_release::OsRelease;
 use gethostname::gethostname;
 use procfs::*;
 
+mod data;
 mod kernel;
 
 use super::{error::*, util::Tick, MonitorBackend};
+use crate::model::*;
+use data::ProcFSData;
 
 /// Linux-specific backend.
 pub struct LinuxBackend {
     tick: Tick,
     release: BackendResult<OsRelease>,
     cpus: BackendResult<CpuInfo>,
-    kernel: kernel::Stats,
+    kernel: ProcFSData<KernelStats>,
 }
 
 impl LinuxBackend {
@@ -22,7 +25,7 @@ impl LinuxBackend {
             tick: tick.clone(),
             release: OsRelease::open().map_err(|e| e.into()),
             cpus: CpuInfo::current().map_err(|e| e.into()),
-            kernel: kernel::Stats::new(tick.clone()),
+            kernel: ProcFSData::for_curent_si(&tick),
         })
     }
 }
@@ -40,7 +43,7 @@ impl LinuxBackend {
 }
 
 impl MonitorBackend for LinuxBackend {
-    fn update(&mut self, _opts: &crate::model::Options) -> BackendResult<()> {
+    fn update(&mut self, _opts: &Options) -> BackendResult<()> {
         self.tick.advance();
         Ok(())
     }
@@ -67,35 +70,43 @@ impl MonitorBackend for LinuxBackend {
         self.map_result(&self.cpus, |cpui| cpui.num_cores() as u32)
     }
 
-    fn global_cpu(&self) -> BackendResult<crate::model::CPU> {
+    fn global_cpu(&self) -> BackendResult<CPU> {
+        // self.kernel.update_if_needed();
+        let cpu = self
+            .kernel
+            .cpu_time_diff()
+            .ok_or(BackendError::NotAvailable)?;
+
+        Ok(CPU {
+            utilization: cpu.total as f32 / cpu.total_used as f32,
+        })
+    }
+
+    fn memory(&self) -> BackendResult<Memory> {
         Err(BackendError::NotSupported)
     }
 
-    fn memory(&self) -> BackendResult<crate::model::Memory> {
+    fn swap(&self) -> BackendResult<Swap> {
         Err(BackendError::NotSupported)
     }
 
-    fn swap(&self) -> BackendResult<crate::model::Swap> {
+    fn load_avg(&self) -> BackendResult<LoadAvg> {
         Err(BackendError::NotSupported)
     }
 
-    fn load_avg(&self) -> BackendResult<crate::model::LoadAvg> {
+    fn processes<'a>(&'a self) -> BackendResult<Vec<Process>> {
         Err(BackendError::NotSupported)
     }
 
-    fn processes<'a>(&'a self) -> BackendResult<Vec<crate::model::Process>> {
+    fn process_cmd_info(&self, pid: u32) -> BackendResult<ProcessCommandInfo> {
         Err(BackendError::NotSupported)
     }
 
-    fn process_cmd_info(&self, pid: u32) -> BackendResult<crate::model::ProcessCommandInfo> {
+    fn networks(&self) -> BackendResult<Vec<NetworkStats>> {
         Err(BackendError::NotSupported)
     }
 
-    fn networks(&self) -> BackendResult<Vec<crate::model::NetworkStats>> {
-        Err(BackendError::NotSupported)
-    }
-
-    fn filesystems(&self) -> BackendResult<Vec<crate::model::Filesystem>> {
+    fn filesystems(&self) -> BackendResult<Vec<Filesystem>> {
         Err(BackendError::NotSupported)
     }
 

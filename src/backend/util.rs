@@ -6,8 +6,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-use super::error::BackendResult;
-
 /// Struct to record time between refreshes.
 pub(super) struct RefreshRecord {
     /// The system tick.
@@ -93,19 +91,9 @@ impl Tick {
     }
 }
 
-pub(super) trait RefreshableSource {
-    /// Get the source's refresh record (only used internally).
-    fn refresh_record(&mut self) -> &mut RefreshRecord;
+/// Trait for computing differences between two observations.
+pub(super) trait Diff {
+    type Difference;
 
-    /// Update the source.
-    fn update(&mut self) -> BackendResult<()>;
-
-    /// Update the source if needed, based on the tick.
-    fn update_if_needed(&mut self) -> BackendResult<()> {
-        if !self.refresh_record().is_current() {
-            self.update()
-        } else {
-            Ok(())
-        }
-    }
+    fn diff(&self, previous: &Self) -> Self::Difference;
 }
