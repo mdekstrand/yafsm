@@ -48,29 +48,29 @@ impl MonitorBackend for LinuxBackend {
         Ok(())
     }
 
-    fn hostname(&self) -> BackendResult<String> {
+    fn hostname(&mut self) -> BackendResult<String> {
         Ok(gethostname().to_string_lossy().into())
     }
 
-    fn system_version(&self) -> BackendResult<String> {
+    fn system_version(&mut self) -> BackendResult<String> {
         self.map_result(&self.release, |osr| osr.pretty_name().into())
     }
 
-    fn uptime(&self) -> BackendResult<std::time::Duration> {
+    fn uptime(&mut self) -> BackendResult<std::time::Duration> {
         let res = Uptime::current()?;
         Ok(res.uptime_duration())
     }
 
-    fn cpu_count(&self) -> BackendResult<u32> {
+    fn cpu_count(&mut self) -> BackendResult<u32> {
         // TODO: fix this to get physical cores
         self.map_result(&self.cpus, |cpui| cpui.num_cores() as u32)
     }
 
-    fn logical_cpu_count(&self) -> BackendResult<u32> {
+    fn logical_cpu_count(&mut self) -> BackendResult<u32> {
         self.map_result(&self.cpus, |cpui| cpui.num_cores() as u32)
     }
 
-    fn global_cpu(&self) -> BackendResult<CPU> {
+    fn global_cpu(&mut self) -> BackendResult<CPU> {
         // self.kernel.update_if_needed();
         let cpu = self
             .kernel
@@ -82,35 +82,35 @@ impl MonitorBackend for LinuxBackend {
         })
     }
 
-    fn memory(&self) -> BackendResult<Memory> {
+    fn memory(&mut self) -> BackendResult<Memory> {
         Err(BackendError::NotSupported)
     }
 
-    fn swap(&self) -> BackendResult<Swap> {
+    fn swap(&mut self) -> BackendResult<Swap> {
         Err(BackendError::NotSupported)
     }
 
-    fn load_avg(&self) -> BackendResult<LoadAvg> {
+    fn load_avg(&mut self) -> BackendResult<LoadAvg> {
         Err(BackendError::NotSupported)
     }
 
-    fn processes<'a>(&'a self) -> BackendResult<Vec<Process>> {
+    fn processes<'a>(&'a mut self) -> BackendResult<Vec<Process>> {
         Err(BackendError::NotSupported)
     }
 
-    fn process_cmd_info(&self, pid: u32) -> BackendResult<ProcessCommandInfo> {
+    fn process_cmd_info(&mut self, pid: u32) -> BackendResult<ProcessCommandInfo> {
         Err(BackendError::NotSupported)
     }
 
-    fn networks(&self) -> BackendResult<Vec<NetworkStats>> {
+    fn networks(&mut self) -> BackendResult<Vec<NetworkStats>> {
         Err(BackendError::NotSupported)
     }
 
-    fn filesystems(&self) -> BackendResult<Vec<Filesystem>> {
+    fn filesystems(&mut self) -> BackendResult<Vec<Filesystem>> {
         Err(BackendError::NotSupported)
     }
 
-    fn has_process_time(&self) -> bool {
+    fn has_process_time(&mut self) -> bool {
         false
     }
 }
