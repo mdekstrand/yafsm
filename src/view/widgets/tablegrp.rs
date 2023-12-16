@@ -49,6 +49,10 @@ impl<'a> TableGroup<'a> {
         }
     }
 
+    pub fn n_tables(&self) -> usize {
+        self.tables.len()
+    }
+
     pub fn add_table<'g, L, CI, CH>(&'g mut self, label: L, cols: CI) -> &'g mut TGTable<'a>
     where
         L: Into<Line<'a>>,

@@ -3,6 +3,7 @@
 use std::cmp::min;
 
 use anyhow::Result;
+use itertools::Itertools;
 use ratatui::prelude::*;
 
 mod banner;
@@ -15,7 +16,7 @@ use banner::render_banner;
 use quicklook::render_quicklook;
 use summaries::*;
 
-use crate::model::MonitorState;
+use crate::{backend::error::BackendErrorFilter, model::MonitorState};
 
 use self::{
     iotables::{render_filesystems, render_network},
@@ -51,11 +52,15 @@ pub fn render_dashboard<'b>(frame: &mut Frame, state: &MonitorState<'b>) -> Resu
     render_banner(frame, state, layout[0])?;
 
     let summaries = [
-        (cpu_summary(state)?, 1),
-        (memory_summary(state)?, 2),
-        (swap_summary(state)?, 4),
-        (load_summary(state)?, 3),
+        (cpu_summary(state).acceptable_to_opt()?, 1),
+        (memory_summary(state).acceptable_to_opt()?, 2),
+        (swap_summary(state).acceptable_to_opt()?, 4),
+        (load_summary(state).acceptable_to_opt()?, 3),
     ];
+    let summaries = summaries
+        .into_iter()
+        .flat_map(|(ico, p)| ico.map(|ic| (ic, p)))
+        .collect_vec();
     let mut boxes = Vec::with_capacity(summaries.len() + 1);
     boxes.push(HeaderBlock::Meters(QL_MIN));
     boxes.push(HeaderBlock::Gutter(1));
@@ -75,18 +80,22 @@ pub fn render_dashboard<'b>(frame: &mut Frame, state: &MonitorState<'b>) -> Resu
     render_network(state, &mut lsg)?;
     render_filesystems(state, &mut lsg)?;
 
-    let tables = Layout::new(
-        Direction::Horizontal,
-        [
-            Constraint::Length(lsg.width()),
-            Constraint::Length(3),
-            Constraint::Min(30),
-        ],
-    )
-    .split(layout[4]);
-    frame.render_widget(lsg, tables[0]);
-
-    render_process_table(frame, state, tables[2])?;
+    let pt_area = if lsg.n_tables() > 0 {
+        let tables = Layout::new(
+            Direction::Horizontal,
+            [
+                Constraint::Length(lsg.width()),
+                Constraint::Length(3),
+                Constraint::Min(30),
+            ],
+        )
+        .split(layout[4]);
+        frame.render_widget(lsg, tables[0]);
+        tables[2]
+    } else {
+        layout[4]
+    };
+    render_process_table(frame, state, pt_area)?;
 
     Ok(())
 }

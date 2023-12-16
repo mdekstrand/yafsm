@@ -1,14 +1,14 @@
 //! Summary box displays.
 
-use anyhow::Result;
 use ratatui::style::{Color, Style, Stylize};
 
+use crate::backend::BackendResult;
 use crate::{
     model::MonitorData,
     view::widgets::infocols::{ICEntry, InfoCols},
 };
 
-pub fn cpu_summary(state: &dyn MonitorData) -> Result<InfoCols> {
+pub fn cpu_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
     Ok(InfoCols::new().add(
         ICEntry::new("CPU")
             .pct(state.global_cpu()?.utilization * 100.0)
@@ -16,7 +16,7 @@ pub fn cpu_summary(state: &dyn MonitorData) -> Result<InfoCols> {
     ))
 }
 
-pub fn memory_summary(state: &dyn MonitorData) -> Result<InfoCols> {
+pub fn memory_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
     let mem = state.memory()?;
     Ok(InfoCols::new()
         .add(
@@ -29,7 +29,7 @@ pub fn memory_summary(state: &dyn MonitorData) -> Result<InfoCols> {
         .add_bytes("avail", mem.free + mem.freeable))
 }
 
-pub fn swap_summary(state: &dyn MonitorData) -> Result<InfoCols> {
+pub fn swap_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
     let swp = state.swap()?;
     Ok(InfoCols::new()
         .add(
@@ -42,7 +42,7 @@ pub fn swap_summary(state: &dyn MonitorData) -> Result<InfoCols> {
         .add_bytes("free", swp.free))
 }
 
-pub fn load_summary(state: &dyn MonitorData) -> Result<InfoCols> {
+pub fn load_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
     let ncpus = state.cpu_count()? as f32;
     let load = state.load_avg()?;
     Ok(InfoCols::new()

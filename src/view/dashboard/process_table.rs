@@ -7,6 +7,7 @@ use ratatui::{
 };
 
 use crate::{
+    backend::error::BackendErrorFilter,
     model::{process::ProcessList, *},
     view::util::{fmt_bytes, fmt_duration, fmt_int_bytes},
 };
@@ -137,7 +138,12 @@ pub fn render_process_table<'b>(
     state: &MonitorState<'b>,
     area: Rect,
 ) -> Result<()> {
-    let mut procs = state.processes()?;
+    let mut procs = if let Some(ps) = state.processes().acceptable_to_opt()? {
+        ps
+    } else {
+        debug!("processes not available");
+        return Ok(());
+    };
     procs.sort();
 
     let layout = Layout::new(
