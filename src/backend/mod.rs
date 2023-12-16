@@ -22,43 +22,43 @@ pub trait MonitorBackend {
     fn update(&mut self, opts: &Options) -> BackendResult<()>;
 
     /// Get the hostname
-    fn hostname(&mut self) -> BackendResult<String>;
+    fn hostname(&self) -> BackendResult<String>;
 
     /// Get the kernel
-    fn system_version(&mut self) -> BackendResult<String>;
+    fn system_version(&self) -> BackendResult<String>;
 
     /// Get the system uptime.
-    fn uptime(&mut self) -> BackendResult<Duration>;
+    fn uptime(&self) -> BackendResult<Duration>;
 
     /// Get the number of physical CPU cores.
-    fn cpu_count(&mut self) -> BackendResult<u32>;
+    fn cpu_count(&self) -> BackendResult<u32>;
 
     /// Get the number of physical CPU cores.
-    fn logical_cpu_count(&mut self) -> BackendResult<u32>;
+    fn logical_cpu_count(&self) -> BackendResult<u32>;
 
     /// Get overall CPU utilization.
-    fn global_cpu(&mut self) -> BackendResult<CPU>;
+    fn global_cpu(&self) -> BackendResult<CPU>;
 
     /// Get memory usage.
-    fn memory(&mut self) -> BackendResult<Memory>;
+    fn memory(&self) -> BackendResult<Memory>;
 
     /// Get swap usage.
-    fn swap(&mut self) -> BackendResult<Swap>;
+    fn swap(&self) -> BackendResult<Swap>;
 
     /// Get the system load average.
-    fn load_avg(&mut self) -> BackendResult<LoadAvg>;
+    fn load_avg(&self) -> BackendResult<LoadAvg>;
 
     /// Get the running processes.
-    fn processes<'a>(&'a mut self) -> BackendResult<Vec<Process>>;
+    fn processes<'a>(&'a self) -> BackendResult<Vec<Process>>;
 
     /// Get the comamnd information for a process.
-    fn process_cmd_info(&mut self, pid: u32) -> BackendResult<ProcessCommandInfo>;
+    fn process_cmd_info(&self, pid: u32) -> BackendResult<ProcessCommandInfo>;
 
     /// Get the networks.
-    fn networks(&mut self) -> BackendResult<Vec<NetworkStats>>;
+    fn networks(&self) -> BackendResult<Vec<NetworkStats>>;
 
     /// Get the filesystems.
-    fn filesystems(&mut self) -> BackendResult<Vec<Filesystem>>;
+    fn filesystems(&self) -> BackendResult<Vec<Filesystem>>;
 
-    fn has_process_time(&mut self) -> bool;
+    fn has_process_time(&self) -> bool;
 }

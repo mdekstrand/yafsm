@@ -46,11 +46,11 @@ impl MonitorBackend for SysInfoBackend {
         Ok(())
     }
 
-    fn hostname(&mut self) -> BackendResult<String> {
+    fn hostname(&self) -> BackendResult<String> {
         self.system.host_name().ok_or(generic_err("no host name"))
     }
 
-    fn system_version(&mut self) -> BackendResult<String> {
+    fn system_version(&self) -> BackendResult<String> {
         let os = self.system.distribution_id();
         let osv = self
             .system
@@ -64,28 +64,28 @@ impl MonitorBackend for SysInfoBackend {
         Ok(format!("{} {} with {} {}", os, osv, k, kv))
     }
 
-    fn uptime(&mut self) -> BackendResult<Duration> {
+    fn uptime(&self) -> BackendResult<Duration> {
         Ok(Duration::from_secs(self.system.uptime()))
     }
 
-    fn cpu_count(&mut self) -> BackendResult<u32> {
+    fn cpu_count(&self) -> BackendResult<u32> {
         self.system
             .physical_core_count()
             .map(|s| s as u32)
             .ok_or(generic_err("CPU count unavailable"))
     }
 
-    fn logical_cpu_count(&mut self) -> BackendResult<u32> {
+    fn logical_cpu_count(&self) -> BackendResult<u32> {
         Ok(self.system.cpus().len() as u32)
     }
 
-    fn global_cpu(&mut self) -> BackendResult<CPU> {
+    fn global_cpu(&self) -> BackendResult<CPU> {
         Ok(CPU {
             utilization: self.system.global_cpu_info().cpu_usage() / 100.0,
         })
     }
 
-    fn memory(&mut self) -> BackendResult<Memory> {
+    fn memory(&self) -> BackendResult<Memory> {
         let used = self.system.used_memory();
         let total = self.system.total_memory();
         let free = self.system.free_memory();
@@ -98,7 +98,7 @@ impl MonitorBackend for SysInfoBackend {
         })
     }
 
-    fn swap(&mut self) -> BackendResult<Swap> {
+    fn swap(&self) -> BackendResult<Swap> {
         Ok(Swap {
             used: self.system.used_swap(),
             free: self.system.free_swap(),
@@ -106,7 +106,7 @@ impl MonitorBackend for SysInfoBackend {
         })
     }
 
-    fn load_avg(&mut self) -> BackendResult<LoadAvg> {
+    fn load_avg(&self) -> BackendResult<LoadAvg> {
         let la = self.system.load_average();
         Ok(LoadAvg {
             one: la.one as f32,
@@ -115,7 +115,7 @@ impl MonitorBackend for SysInfoBackend {
         })
     }
 
-    fn processes<'a>(&'a mut self) -> BackendResult<Vec<Process>> {
+    fn processes<'a>(&'a self) -> BackendResult<Vec<Process>> {
         let procs = self.system.processes();
         let mut out = Vec::with_capacity(procs.len());
         for proc in procs.values() {
@@ -154,7 +154,7 @@ impl MonitorBackend for SysInfoBackend {
         Ok(out)
     }
 
-    fn process_cmd_info(&mut self, pid: u32) -> BackendResult<ProcessCommandInfo> {
+    fn process_cmd_info(&self, pid: u32) -> BackendResult<ProcessCommandInfo> {
         let procs = self.system.processes();
         let pid = PidExt::from_u32(pid);
         let proc = procs.get(&pid).ok_or(generic_err("missing process"))?;
@@ -164,7 +164,7 @@ impl MonitorBackend for SysInfoBackend {
         })
     }
 
-    fn networks(&mut self) -> BackendResult<Vec<NetworkStats>> {
+    fn networks(&self) -> BackendResult<Vec<NetworkStats>> {
         let nets = self.system.networks();
         Ok(nets
             .into_iter()
@@ -178,7 +178,7 @@ impl MonitorBackend for SysInfoBackend {
             .collect())
     }
 
-    fn filesystems(&mut self) -> BackendResult<Vec<Filesystem>> {
+    fn filesystems(&self) -> BackendResult<Vec<Filesystem>> {
         let disks = self.system.disks();
         Ok(disks
             .into_iter()
@@ -192,7 +192,7 @@ impl MonitorBackend for SysInfoBackend {
             .collect_vec())
     }
 
-    fn has_process_time(&mut self) -> bool {
+    fn has_process_time(&self) -> bool {
         false
     }
 }
