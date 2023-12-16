@@ -8,14 +8,14 @@ mod kernel;
 
 use super::{error::*, util::Tick, MonitorBackend};
 use crate::model::*;
-use data::ProcFSData;
+use data::ProcFSWrapper;
 
 /// Linux-specific backend.
 pub struct LinuxBackend {
     tick: Tick,
     release: BackendResult<OsRelease>,
     cpus: BackendResult<CpuInfo>,
-    kernel: ProcFSData<KernelStats>,
+    kernel: ProcFSWrapper<KernelStats>,
 }
 
 impl LinuxBackend {
@@ -25,7 +25,7 @@ impl LinuxBackend {
             tick: tick.clone(),
             release: OsRelease::open().map_err(|e| e.into()),
             cpus: CpuInfo::current().map_err(|e| e.into()),
-            kernel: ProcFSData::for_curent_si(&tick),
+            kernel: ProcFSWrapper::for_curent_si(&tick),
         })
     }
 }
@@ -71,11 +71,7 @@ impl MonitorBackend for LinuxBackend {
     }
 
     fn global_cpu(&self) -> BackendResult<CPU> {
-        // self.kernel.update_if_needed();
-        let cpu = self
-            .kernel
-            .cpu_time_diff()
-            .ok_or(BackendError::NotAvailable)?;
+        let cpu = self.kernel.cpu_time_diff()?;
 
         Ok(CPU {
             utilization: cpu.total as f32 / cpu.total_used as f32,

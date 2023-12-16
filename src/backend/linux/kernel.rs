@@ -1,9 +1,9 @@
 use log::*;
 use procfs::{CpuTime, KernelStats};
 
-use crate::backend::util::Diff;
+use crate::backend::{util::Diff, BackendError, BackendResult};
 
-use super::data::ProcFSData;
+use super::data::ProcFSWrapper;
 
 /// Total CPU time.
 fn total_time(cpu: &CpuTime) -> u64 {
@@ -68,18 +68,19 @@ impl From<&CpuTime> for CpuTicks {
     }
 }
 
-impl ProcFSData<KernelStats> {
-    pub(super) fn cpu_time_diff(&self) -> Option<CpuTicks> {
-        match (&self.current, &self.previous) {
-            (Some(c), Some(p)) => Some(c.total.diff(&p.total)),
-            (Some(c), None) => Some((&c.total).into()),
+impl ProcFSWrapper<KernelStats> {
+    pub(super) fn cpu_time_diff(&self) -> BackendResult<CpuTicks> {
+        let data = self.data()?;
+        match (&data.current, &data.previous) {
+            (Some(c), Some(p)) => Ok(c.total.diff(&p.total)),
+            (Some(c), None) => Ok((&c.total).into()),
             (None, Some(_)) => {
                 warn!("update lost data");
-                None
+                Err(BackendError::NotAvailable)
             }
             (None, None) => {
                 warn!("called without update");
-                None
+                Err(BackendError::NotAvailable)
             }
         }
     }

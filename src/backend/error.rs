@@ -35,6 +35,7 @@ pub trait BackendErrorFilter<T> {
     /// errors are:
     ///
     /// - [BackendError::NotSupported]
+    /// - [BackendError::NotAvailable]
     /// - [BackendError::NotFound]
     /// - [BackendError::NotAllowed]
     fn acceptable_to_opt(self) -> BackendResult<Option<T>>;
@@ -44,9 +45,12 @@ impl<T> BackendErrorFilter<T> for BackendResult<T> {
     fn acceptable_to_opt(self) -> BackendResult<Option<T>> {
         match self {
             Ok(r) => Ok(Some(r)),
-            Err(BackendError::NotSupported | BackendError::NotFound | BackendError::NotAllowed) => {
-                Ok(None)
-            }
+            Err(
+                BackendError::NotSupported
+                | BackendError::NotFound
+                | BackendError::NotAllowed
+                | BackendError::NotAvailable,
+            ) => Ok(None),
             Err(e) => Err(e),
         }
     }
