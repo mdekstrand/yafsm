@@ -91,8 +91,6 @@ impl Diff for CpuTicks {
     type Difference = CpuTicks;
 
     fn diff(&self, previous: &Self) -> Self::Difference {
-        trace!("comparing current cpu: {:#?}", self);
-        trace!("comparing previous cpu: {:#?}", previous);
         CpuTicks {
             user: self.user - previous.user,
             nice: self.nice - previous.nice,
