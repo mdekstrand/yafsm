@@ -26,7 +26,7 @@ use self::{
 
 use super::widgets::tablegrp::TableGroup;
 
-const QL_MIN: u16 = 20;
+const QL_MIN: u16 = 12;
 
 enum HeaderBlock {
     Meters(u16),
