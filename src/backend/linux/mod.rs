@@ -17,6 +17,7 @@ pub struct LinuxBackend {
     release: BackendResult<OsRelease>,
     cpus: BackendResult<CpuInfo>,
     kernel: ProcFSWrapper<KernelStats>,
+    memory: ProcFSWrapper<Meminfo>,
 }
 
 impl LinuxBackend {
@@ -27,6 +28,7 @@ impl LinuxBackend {
             release: OsRelease::open().map_err(|e| e.into()),
             cpus: CpuInfo::current().map_err(|e| e.into()),
             kernel: ProcFSWrapper::for_curent_si(&tick),
+            memory: ProcFSWrapper::for_current(&tick),
         })
     }
 }
@@ -81,11 +83,30 @@ impl MonitorBackend for LinuxBackend {
     }
 
     fn memory(&self) -> BackendResult<Memory> {
-        Err(BackendError::NotSupported)
+        let mem = self.memory.current()?;
+        Ok(Memory {
+            used: if let Some(avail) = mem.mem_available {
+                mem.mem_total - avail
+            } else {
+                mem.active + mem.inactive
+            },
+            freeable: if let Some(avail) = mem.mem_available {
+                avail - mem.mem_free
+            } else {
+                mem.cached + mem.buffers
+            },
+            free: mem.mem_free,
+            total: mem.mem_total,
+        })
     }
 
     fn swap(&self) -> BackendResult<Swap> {
-        Err(BackendError::NotSupported)
+        let mem = self.memory.current()?;
+        Ok(Swap {
+            used: mem.swap_total - mem.swap_free,
+            free: mem.swap_free,
+            total: mem.swap_total,
+        })
     }
 
     fn load_avg(&self) -> BackendResult<LoadAvg> {

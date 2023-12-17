@@ -5,6 +5,7 @@ use std::fmt::Debug;
 use log::*;
 use procfs::{Current, CurrentSI, ProcResult};
 
+use crate::backend::BackendError;
 use crate::backend::{
     util::{RefreshRecord, Tick},
     BackendResult,
@@ -60,7 +61,7 @@ impl<T: CurrentSI> ProcFSWrapper<T> {
 }
 
 impl<T: Debug> ProcFSWrapper<T> {
-    /// Get the current data, updating if necessary.
+    /// Get the current state, updating if necessary.
     pub(super) fn data<'a>(&'a self) -> BackendResult<Ref<'a, ProcFSData<T>>> {
         let mut state = self.state.borrow_mut();
         if !state.window.is_current() {
@@ -72,5 +73,12 @@ impl<T: Debug> ProcFSWrapper<T> {
         drop(state);
 
         Ok(self.state.borrow())
+    }
+
+    /// Get the current data, updating if necessary.
+    pub(super) fn current<'a>(&'a self) -> BackendResult<Ref<'a, T>> {
+        self.data().and_then(|c| {
+            Ref::filter_map(c, |s| s.current.as_ref()).map_err(|_| BackendError::NotAvailable)
+        })
     }
 }
