@@ -35,7 +35,12 @@ impl RefreshRecord {
 
     /// Check if it is current (only works with a system tick).
     pub fn is_current(&self) -> bool {
-        self.last_tick < self.tick.current()
+        self.last_tick >= self.tick.current()
+    }
+
+    /// Get the last tick value.
+    pub fn tick(&self) -> u64 {
+        self.last_tick
     }
 
     /// Update the refresh window to mark a refresh at the current time.

@@ -32,6 +32,7 @@ fn total_used(cpu: &CpuTime) -> u64 {
 
 /// Measure of time spent in different CPU states.
 /// Like [CpuTime], but we can construct it and it knows about totals.
+#[derive(Debug, Clone)]
 pub struct CpuTicks {
     pub user: u64,
     pub nice: u64,
@@ -90,6 +91,8 @@ impl Diff for CpuTicks {
     type Difference = CpuTicks;
 
     fn diff(&self, previous: &Self) -> Self::Difference {
+        trace!("comparing current cpu: {:#?}", self);
+        trace!("comparing previous cpu: {:#?}", previous);
         CpuTicks {
             user: self.user - previous.user,
             nice: self.nice - previous.nice,

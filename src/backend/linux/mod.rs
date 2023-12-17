@@ -1,6 +1,7 @@
 //! Linux-specific backend with [procfs].
 use etc_os_release::OsRelease;
 use gethostname::gethostname;
+use log::*;
 use procfs::*;
 
 mod data;
@@ -45,6 +46,7 @@ impl LinuxBackend {
 impl MonitorBackend for LinuxBackend {
     fn update(&mut self, _opts: &Options) -> BackendResult<()> {
         self.tick.advance();
+        trace!("advanced to tick {}", self.tick.current());
         Ok(())
     }
 
@@ -74,7 +76,7 @@ impl MonitorBackend for LinuxBackend {
         let cpu = self.kernel.cpu_time_diff()?;
 
         Ok(CPU {
-            utilization: cpu.total as f32 / cpu.total_used as f32,
+            utilization: cpu.total_used as f32 / cpu.total as f32,
         })
     }
 
