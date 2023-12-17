@@ -1,7 +1,7 @@
 use std::{path::PathBuf, time::Duration};
 
 use anyhow::Result;
-use clap::{ArgAction, Parser};
+use clap::Parser;
 use log::*;
 
 mod backend;
@@ -30,8 +30,11 @@ struct CLIOptions {
     #[arg(long = "log-file")]
     log_file: Option<PathBuf>,
     /// Enable debug log messages.
-    #[arg(long = "debug", action=ArgAction::Count)]
-    debug: u8,
+    #[arg(long = "debug")]
+    debug: bool,
+    /// Enable trace log messages.
+    #[arg(long = "trace")]
+    trace: bool,
 
     /// Refresh period (in seconds).
     #[arg(short = 'r', long = "refresh", default_value = "3")]
@@ -67,9 +70,9 @@ fn init_logging(cli: &CLIOptions) -> Result<()> {
         } else {
             None
         },
-        if cli.debug > 1 {
+        if cli.trace {
             LevelFilter::Trace
-        } else if cli.debug > 0 {
+        } else if cli.debug {
             LevelFilter::Debug
         } else {
             LevelFilter::Info

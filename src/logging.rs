@@ -12,7 +12,13 @@ pub fn initialize<P: AsRef<Path>>(
     file_filter: LevelFilter,
 ) -> Result<()> {
     let mut log = Dispatch::new().level(file_filter).format(|out, msg, rec| {
-        out.finish(format_args!("[{}] {}", rec.level(), msg));
+        out.finish(format_args!(
+            "[{}] {}:{}: {}",
+            rec.level(),
+            rec.file().unwrap_or("<unknown>"),
+            rec.line().unwrap_or_default(),
+            msg
+        ));
     });
     if let Some(path) = file {
         let f = File::options()
