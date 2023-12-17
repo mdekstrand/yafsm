@@ -5,8 +5,8 @@ use clap::Parser;
 use log::*;
 
 mod backend;
+mod controller;
 mod dump;
-mod event_loop;
 mod logging;
 mod model;
 mod term;
@@ -17,8 +17,8 @@ use backend::linux::LinuxBackend;
 use backend::sysinfo::SysInfoBackend;
 #[cfg(target_os = "linux")]
 use backend::MonitorBackend;
+use controller::run_event_loop;
 use dump::DumpOpts;
-use event_loop::run_event_loop;
 use model::{MonitorState, Options};
 use term::with_terminal;
 
