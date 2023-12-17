@@ -24,6 +24,7 @@ where
                     // keypress
                     match e.code {
                         KeyCode::Char('q') => return Ok(()),
+
                         // key process sorting
                         KeyCode::Char('a') => state.proc_sort = None,
                         KeyCode::Char('c') => {
