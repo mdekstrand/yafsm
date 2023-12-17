@@ -4,6 +4,7 @@ use std::cmp::min;
 
 use anyhow::Result;
 use itertools::Itertools;
+use log::*;
 use ratatui::prelude::*;
 
 mod banner;
@@ -55,6 +56,7 @@ pub fn render_dashboard<'b>(frame: &mut Frame, state: &MonitorState<'b>) -> Resu
         (cpu_summary(state).acceptable_to_opt()?, 1),
         (memory_summary(state).acceptable_to_opt()?, 2),
         (swap_summary(state).acceptable_to_opt()?, 4),
+        (pressure_summary(state).acceptable_to_opt()?, 5),
         (load_summary(state).acceptable_to_opt()?, 3),
     ];
     let summaries = summaries
@@ -107,29 +109,37 @@ fn layout_summaries(blocks: &[HeaderBlock], area: Rect) -> Vec<Rect> {
     }
 
     let mut widths = Vec::with_capacity(blocks.len());
+    widths.resize_with(blocks.len(), Default::default);
     let mut order: Vec<_> = (0..blocks.len()).collect();
     order.sort_by_key(|i| match blocks[*i] {
         HeaderBlock::Meters(_) => 0,
         HeaderBlock::Gutter(_) => 0,
         HeaderBlock::Summary { priority, .. } => priority,
     });
+    trace!("summary priority order: {:?}", order);
 
     let mut remaining = area.width;
     let mut min_incr = 100;
     // iniital allocation
     for i in &order {
-        let width = match blocks[*i] {
-            HeaderBlock::Meters(min) => min,
-            HeaderBlock::Gutter(w) => w,
-            HeaderBlock::Summary { col_size, .. } => col_size,
+        let (expandable, width) = match blocks[*i] {
+            HeaderBlock::Meters(min) => (true, min),
+            HeaderBlock::Gutter(w) => (false, w),
+            HeaderBlock::Summary { col_size, .. } => (true, col_size),
         };
         if remaining >= width {
-            widths.push(width);
+            widths[*i] = width;
             remaining -= width;
-            min_incr = min(min_incr, width);
+            if expandable {
+                min_incr = min(min_incr, width);
+            }
+        } else {
+            widths[*i] = 0;
         }
     }
     assert_eq!(widths.len(), blocks.len());
+    trace!("layout: {} blocks, min incr {}", widths.len(), min_incr);
+    trace!("initial widths: {:?}", widths);
 
     // allocate more until nothing has more columns, or we've used up the space
     let mut added = true;
@@ -144,8 +154,7 @@ fn layout_summaries(blocks: &[HeaderBlock], area: Rect) -> Vec<Rect> {
                 }
                 _ => 0,
             };
-            if incr > 0 {
-                assert!(remaining >= incr);
+            if incr > 0 && remaining >= incr {
                 *width += incr;
                 remaining -= incr;
                 added = true;
@@ -157,6 +166,7 @@ fn layout_summaries(blocks: &[HeaderBlock], area: Rect) -> Vec<Rect> {
     // 1. give remaining space to the meter (first rectangle)
     // 2. compute the x-coordinates based on final widths
     widths[0] += remaining;
+    trace!("final widths: {:?}", widths);
 
     let mut x = area.x;
     let mut split = Vec::with_capacity(blocks.len());

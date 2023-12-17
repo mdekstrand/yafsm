@@ -19,6 +19,9 @@ pub struct LinuxBackend {
     kernel: ProcFSWrapper<KernelStats>,
     memory: ProcFSWrapper<Meminfo>,
     load: ProcFSWrapper<LoadAverage>,
+    cpu_pressure: ProcFSWrapper<CpuPressure>,
+    mem_pressure: ProcFSWrapper<MemoryPressure>,
+    io_pressure: ProcFSWrapper<IoPressure>,
 }
 
 impl LinuxBackend {
@@ -31,6 +34,9 @@ impl LinuxBackend {
             kernel: ProcFSWrapper::for_curent_si(&tick),
             memory: ProcFSWrapper::for_current(&tick),
             load: ProcFSWrapper::for_current(&tick),
+            cpu_pressure: ProcFSWrapper::for_current(&tick),
+            mem_pressure: ProcFSWrapper::for_current(&tick),
+            io_pressure: ProcFSWrapper::for_current(&tick),
         })
     }
 }
@@ -117,6 +123,45 @@ impl MonitorBackend for LinuxBackend {
             one: load.one,
             five: load.five,
             fifteen: load.fifteen,
+        })
+    }
+
+    fn pressure(&self) -> BackendResult<SystemPressure> {
+        let cp = self.cpu_pressure.current()?;
+        let mp = self.mem_pressure.current()?;
+        let ip = self.io_pressure.current()?;
+
+        Ok(SystemPressure {
+            cpu_psi: Pressure {
+                avg10: cp.some.avg10,
+                avg60: cp.some.avg60,
+                avg300: cp.some.avg300,
+                total: cp.some.total,
+            },
+            mem_psi: Pressure {
+                avg10: mp.some.avg10,
+                avg60: mp.some.avg60,
+                avg300: mp.some.avg300,
+                total: mp.some.total,
+            },
+            mem_full_psi: Pressure {
+                avg10: mp.full.avg10,
+                avg60: mp.full.avg60,
+                avg300: mp.full.avg300,
+                total: mp.full.total,
+            },
+            io_psi: Pressure {
+                avg10: ip.some.avg10,
+                avg60: ip.some.avg60,
+                avg300: ip.some.avg300,
+                total: ip.some.total,
+            },
+            io_full_psi: Pressure {
+                avg10: ip.full.avg10,
+                avg60: ip.full.avg60,
+                avg300: ip.full.avg300,
+                total: ip.full.total,
+            },
         })
     }
 

@@ -18,7 +18,7 @@ pub mod swap;
 pub use cpu::CPU;
 pub use disk::DiskIO;
 pub use fs::Filesystem;
-pub use load::LoadAvg;
+pub use load::{LoadAvg, Pressure, SystemPressure};
 pub use memory::Memory;
 pub use network::NetworkStats;
 pub use options::Options;
@@ -113,6 +113,10 @@ impl<'back> SystemResources for MonitorState<'back> {
 
     fn load_avg(&self) -> BackendResult<LoadAvg> {
         self.backend.load_avg()
+    }
+
+    fn pressure(&self) -> BackendResult<SystemPressure> {
+        self.backend.pressure()
     }
 }
 

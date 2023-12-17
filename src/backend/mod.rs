@@ -48,6 +48,11 @@ pub trait MonitorBackend {
     /// Get the system load average.
     fn load_avg(&self) -> BackendResult<LoadAvg>;
 
+    /// Get system pressure info.
+    fn pressure(&self) -> BackendResult<SystemPressure> {
+        Err(BackendError::NotSupported)
+    }
+
     /// Get the running processes.
     fn processes<'a>(&'a self) -> BackendResult<Vec<Process>>;
 
