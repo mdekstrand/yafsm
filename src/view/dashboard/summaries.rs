@@ -46,9 +46,9 @@ pub fn pressure_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
     let press = state.pressure()?;
     Ok(InfoCols::new()
         .add(ICEntry::new("PSI").string("10s"))
-        .add_value("cpu", press.cpu_psi.avg10)
-        .add_value("mem", press.mem_psi.avg10)
-        .add_value("io", press.io_psi.avg10))
+        .add_pct("cpu", press.cpu_psi.avg10)
+        .add_pct("mem", press.mem_psi.avg10)
+        .add_pct("io", press.io_psi.avg10))
 }
 
 pub fn load_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
