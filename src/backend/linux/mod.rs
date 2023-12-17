@@ -18,6 +18,7 @@ pub struct LinuxBackend {
     cpus: BackendResult<CpuInfo>,
     kernel: ProcFSWrapper<KernelStats>,
     memory: ProcFSWrapper<Meminfo>,
+    load: ProcFSWrapper<LoadAverage>,
 }
 
 impl LinuxBackend {
@@ -29,6 +30,7 @@ impl LinuxBackend {
             cpus: CpuInfo::current().map_err(|e| e.into()),
             kernel: ProcFSWrapper::for_curent_si(&tick),
             memory: ProcFSWrapper::for_current(&tick),
+            load: ProcFSWrapper::for_current(&tick),
         })
     }
 }
@@ -110,7 +112,12 @@ impl MonitorBackend for LinuxBackend {
     }
 
     fn load_avg(&self) -> BackendResult<LoadAvg> {
-        Err(BackendError::NotSupported)
+        let load = self.load.current()?;
+        Ok(LoadAvg {
+            one: load.one,
+            five: load.five,
+            fifteen: load.fifteen,
+        })
     }
 
     fn processes<'a>(&'a self) -> BackendResult<Vec<Process>> {
