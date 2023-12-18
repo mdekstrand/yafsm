@@ -1,4 +1,4 @@
-use super::{load::SystemPressure, *};
+use super::{load::SystemPressure, process::ProcessList, *};
 use crate::backend::BackendResult as Result;
 
 pub trait SystemInfo {
