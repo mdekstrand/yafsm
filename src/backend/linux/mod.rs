@@ -6,6 +6,7 @@ use procfs::*;
 
 mod data;
 mod kernel;
+mod network;
 
 use super::{error::*, util::Tick, MonitorBackend};
 use crate::model::*;
@@ -18,10 +19,13 @@ pub struct LinuxBackend {
     cpus: BackendResult<CpuInfo>,
     kernel: ProcFSWrapper<KernelStats>,
     memory: ProcFSWrapper<Meminfo>,
+
     load: ProcFSWrapper<LoadAverage>,
     cpu_pressure: ProcFSWrapper<CpuPressure>,
     mem_pressure: ProcFSWrapper<MemoryPressure>,
     io_pressure: ProcFSWrapper<IoPressure>,
+
+    net_ifs: ProcFSWrapper<net::InterfaceDeviceStatus>,
 }
 
 impl LinuxBackend {
@@ -37,6 +41,7 @@ impl LinuxBackend {
             cpu_pressure: ProcFSWrapper::for_current(&tick),
             mem_pressure: ProcFSWrapper::for_current(&tick),
             io_pressure: ProcFSWrapper::for_current(&tick),
+            net_ifs: ProcFSWrapper::for_current(&tick),
         })
     }
 }
@@ -174,7 +179,17 @@ impl MonitorBackend for LinuxBackend {
     }
 
     fn networks(&self) -> BackendResult<Vec<NetworkStats>> {
-        Err(BackendError::NotSupported)
+        let nets = self.net_ifs.network_usage()?;
+        Ok(nets
+            .into_iter()
+            .map(|n| NetworkStats {
+                name: n.name,
+                rx_bytes: n.recv_bytes,
+                rx_packets: n.recv_packets,
+                tx_bytes: n.sent_bytes,
+                tx_packets: n.sent_packets,
+            })
+            .collect())
     }
 
     fn filesystems(&self) -> BackendResult<Vec<Filesystem>> {

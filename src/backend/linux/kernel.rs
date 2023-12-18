@@ -1,9 +1,8 @@
 use log::*;
 use procfs::{CpuTime, KernelStats};
 
-use crate::backend::{util::Diff, BackendError, BackendResult};
-
 use super::data::ProcFSWrapper;
+use crate::backend::{util::Diff, BackendError, BackendResult};
 
 /// Total CPU time.
 fn total_time(cpu: &CpuTime) -> u64 {
