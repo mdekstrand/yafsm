@@ -5,7 +5,7 @@ use etc_os_release::OsRelease;
 use gethostname::gethostname;
 use log::*;
 use nix::sys::statvfs::statvfs;
-use procfs::process::all_processes;
+use procfs::process::{all_processes, Process as LinuxProcess};
 use procfs::*;
 use regex::RegexSet;
 
@@ -77,7 +77,8 @@ impl LinuxBackend {
         }
     }
 
-    fn process_info(&self, proc: procfs::process::Process) -> BackendResult<Process> {
+    fn process_info(&self, proc: LinuxProcess) -> BackendResult<Process> {
+        trace!("looking up process {}", proc.pid);
         let stat = proc.stat()?;
         Ok(Process {
             pid: proc.pid as u32,
@@ -221,11 +222,15 @@ impl MonitorBackend for LinuxBackend {
                 Err(e) => warn!("process {}: error fetching info", e),
             }
         }
-        Err(BackendError::NotSupported)
+        Ok(procs)
     }
 
     fn process_cmd_info(&self, pid: u32) -> BackendResult<ProcessCommandInfo> {
-        Err(BackendError::NotSupported)
+        let proc = LinuxProcess::new(pid as i32)?;
+        Ok(ProcessCommandInfo {
+            exe: proc.exe()?.to_string_lossy().to_string(),
+            cmdline: proc.cmdline()?,
+        })
     }
 
     fn networks(&self) -> BackendResult<Vec<NetworkStats>> {
