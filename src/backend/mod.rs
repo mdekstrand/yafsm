@@ -54,16 +54,31 @@ pub trait MonitorBackend {
     }
 
     /// Get the running processes.
-    fn processes<'a>(&'a self) -> BackendResult<Vec<Process>>;
+    fn processes<'a>(&'a self) -> BackendResult<Vec<Process>> {
+        Err(BackendError::NotSupported)
+    }
 
     /// Get the comamnd information for a process.
-    fn process_cmd_info(&self, pid: u32) -> BackendResult<ProcessCommandInfo>;
+    fn process_cmd_info(&self, _pid: u32) -> BackendResult<ProcessCommandInfo> {
+        Err(BackendError::NotSupported)
+    }
 
     /// Get the networks.
-    fn networks(&self) -> BackendResult<Vec<NetworkStats>>;
+    fn networks(&self) -> BackendResult<Vec<NetworkStats>> {
+        Err(BackendError::NotSupported)
+    }
+
+    /// Get the disks.
+    fn disks(&self) -> BackendResult<Vec<DiskIO>> {
+        Err(BackendError::NotSupported)
+    }
 
     /// Get the filesystems.
-    fn filesystems(&self) -> BackendResult<Vec<Filesystem>>;
+    fn filesystems(&self) -> BackendResult<Vec<Filesystem>> {
+        Err(BackendError::NotSupported)
+    }
 
-    fn has_process_time(&self) -> bool;
+    fn has_process_time(&self) -> bool {
+        false
+    }
 }

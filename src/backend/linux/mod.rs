@@ -3,8 +3,10 @@ use etc_os_release::OsRelease;
 use gethostname::gethostname;
 use log::*;
 use procfs::*;
+use regex::RegexSet;
 
 mod data;
+mod io;
 mod kernel;
 mod network;
 
@@ -26,6 +28,8 @@ pub struct LinuxBackend {
     io_pressure: ProcFSWrapper<IoPressure>,
 
     net_ifs: ProcFSWrapper<net::InterfaceDeviceStatus>,
+    disks: ProcFSWrapper<DiskStats>,
+    disk_filters: RegexSet,
 }
 
 impl LinuxBackend {
@@ -42,6 +46,14 @@ impl LinuxBackend {
             mem_pressure: ProcFSWrapper::for_current(&tick),
             io_pressure: ProcFSWrapper::for_current(&tick),
             net_ifs: ProcFSWrapper::for_current(&tick),
+            disks: ProcFSWrapper::for_current(&tick),
+            disk_filters: RegexSet::new(&[
+                r"^loop\d+",
+                r"^mmcblk\d+(p|boot)\d+",
+                r"dm-\d+",
+                r"([sh]|xv])d[a-z]+\d+",
+            ])
+            .unwrap(),
         })
     }
 }
@@ -189,6 +201,14 @@ impl MonitorBackend for LinuxBackend {
                 tx_bytes: n.sent_bytes,
                 tx_packets: n.sent_packets,
             })
+            .collect())
+    }
+
+    fn disks(&self) -> BackendResult<Vec<DiskIO>> {
+        let disks = self.disks.disk_stats()?;
+        Ok(disks
+            .into_iter()
+            .filter(|d| !self.disk_filters.is_match(&d.name))
             .collect())
     }
 
