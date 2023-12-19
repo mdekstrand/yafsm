@@ -29,3 +29,4 @@ sysinfo = { version = "~0.29", default-features = false }
 procfs = "^0.16"
 gethostname = "^0.4.3"
 etc-os-release = "^0.1"
+nix = { version = "~0.27", features = ["fs"] }

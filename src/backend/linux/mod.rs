@@ -1,7 +1,10 @@
 //! Linux-specific backend with [procfs].
+use std::collections::HashSet;
+
 use etc_os_release::OsRelease;
 use gethostname::gethostname;
 use log::*;
+use nix::sys::statvfs::statvfs;
 use procfs::*;
 use regex::RegexSet;
 
@@ -30,6 +33,8 @@ pub struct LinuxBackend {
     net_ifs: ProcFSWrapper<net::InterfaceDeviceStatus>,
     disks: ProcFSWrapper<DiskStats>,
     disk_filters: RegexSet,
+    mounts: ProcFSWrapper<Vec<MountEntry>>,
+    mount_filters: RegexSet,
 }
 
 impl LinuxBackend {
@@ -50,10 +55,12 @@ impl LinuxBackend {
             disk_filters: RegexSet::new(&[
                 r"^loop\d+",
                 r"^mmcblk\d+(p|boot)\d+",
-                r"dm-\d+",
-                r"([sh]|xv])d[a-z]+\d+",
+                r"^dm-\d+",
+                r"^([sh]|xv])d[a-z]+\d+",
             ])
             .unwrap(),
+            mounts: ProcFSWrapper::new(mounts, &tick),
+            mount_filters: RegexSet::new(&["^/(dev|proc|sys|run)(/|$)"]).unwrap(),
         })
     }
 }
@@ -213,7 +220,25 @@ impl MonitorBackend for LinuxBackend {
     }
 
     fn filesystems(&self) -> BackendResult<Vec<Filesystem>> {
-        Err(BackendError::NotSupported)
+        let mounts = self.mounts.current()?;
+        let mut res = Vec::with_capacity(mounts.len());
+        let mut seen = HashSet::new();
+        for me in mounts.iter() {
+            let path = me.fs_file.as_str();
+            if self.mount_filters.is_match(path) || seen.contains(path) {
+                continue;
+            }
+            seen.insert(path.to_string());
+            let stat = statvfs(path)?;
+            res.push(Filesystem {
+                name: me.fs_spec.clone(),
+                mount_point: path.to_string(),
+                total: stat.blocks() * stat.block_size(),
+                avail: stat.blocks_available() * stat.block_size(),
+                used: (stat.blocks() - stat.blocks_available()) * stat.block_size(),
+            });
+        }
+        Ok(res)
     }
 
     fn has_process_time(&self) -> bool {

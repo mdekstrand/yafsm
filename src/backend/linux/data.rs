@@ -34,7 +34,7 @@ pub(super) struct ProcFSData<T> {
 }
 
 impl<T> ProcFSWrapper<T> {
-    fn new(fetch: ProcDataSource<T>, tick: &Tick) -> Self {
+    pub(super) fn new(fetch: ProcDataSource<T>, tick: &Tick) -> Self {
         ProcFSWrapper {
             fetch,
             state: RefCell::new(ProcFSData {

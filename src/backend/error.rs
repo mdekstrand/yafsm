@@ -23,6 +23,9 @@ pub enum BackendError {
     #[error("IO error: {0}")]
     IOError(io::ErrorKind),
 
+    #[error("unix error: {0}")]
+    NixError(#[from] nix::errno::Errno),
+
     #[error("unknown error: {0}")]
     Other(String),
 }
