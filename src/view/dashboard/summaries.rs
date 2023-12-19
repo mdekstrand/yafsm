@@ -3,17 +3,40 @@
 use ratatui::style::{Color, Style, Stylize};
 
 use crate::backend::BackendResult;
-use crate::{
-    model::MonitorData,
-    view::widgets::infocols::{ICEntry, InfoCols},
-};
+use crate::model::cpu::CPUExt;
+use crate::model::MonitorData;
+use crate::view::widgets::infocols::{ICEntry, InfoCols};
 
 pub fn cpu_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
-    Ok(InfoCols::new().add(
+    let cpu = state.global_cpu()?;
+    let mut display = InfoCols::new().add(
         ICEntry::new("CPU")
             .pct(state.global_cpu()?.utilization * 100.0)
             .value_style(Style::new().bold()),
-    ))
+    );
+    if let CPUExt::Linux(lcpu) = cpu.extended {
+        display = display
+            .add_pct("user", lcpu.user * 100.0)
+            .add_pct("system", lcpu.system * 100.0)
+            .add_pct("iowait", lcpu.iowait * 100.0)
+            .add(
+                ICEntry::new("idle")
+                    .pct(lcpu.idle * 100.0)
+                    .value_style(Style::new().fg(Color::White)),
+            )
+            .add(
+                ICEntry::new("nice")
+                    .pct(lcpu.nice * 100.0)
+                    .value_style(Style::new().fg(Color::White)),
+            )
+            .add(
+                ICEntry::new("irq")
+                    .pct(lcpu.irq * 100.0)
+                    .value_style(Style::new().fg(Color::White)),
+            )
+            .add_pct("steal", lcpu.steal * 100.0)
+    }
+    Ok(display)
 }
 
 pub fn memory_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {

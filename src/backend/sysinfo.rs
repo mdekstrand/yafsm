@@ -82,6 +82,7 @@ impl MonitorBackend for SysInfoBackend {
     fn global_cpu(&self) -> BackendResult<CPU> {
         Ok(CPU {
             utilization: self.system.global_cpu_info().cpu_usage() / 100.0,
+            extended: cpu::CPUExt::None,
         })
     }
 

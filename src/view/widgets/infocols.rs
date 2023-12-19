@@ -197,8 +197,8 @@ impl Widget for InfoCols {
             );
 
             // done drawing — set up position for next entry
-            if row == COL_ROWS {
-                if area.width < (col + 1) * COL_WIDTH {
+            if row >= COL_ROWS - 1 {
+                if area.width >= (col + 2) * COL_WIDTH {
                     col += 1;
                     row = 0;
                 } else {

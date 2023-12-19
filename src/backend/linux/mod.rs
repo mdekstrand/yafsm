@@ -15,6 +15,7 @@ mod kernel;
 mod network;
 
 use super::{error::*, util::Tick, MonitorBackend};
+use crate::model::cpu::LinuxCPU;
 use crate::model::*;
 use data::ProcFSWrapper;
 
@@ -130,9 +131,19 @@ impl MonitorBackend for LinuxBackend {
 
     fn global_cpu(&self) -> BackendResult<CPU> {
         let cpu = self.kernel.cpu_time_diff()?;
+        let tot = cpu.total as f32;
 
         Ok(CPU {
-            utilization: cpu.total_used as f32 / cpu.total as f32,
+            utilization: cpu.total_used as f32 / tot,
+            extended: cpu::CPUExt::Linux(LinuxCPU {
+                user: cpu.user as f32 / tot,
+                system: cpu.system as f32 / tot,
+                iowait: cpu.iowait.unwrap_or_default() as f32 / tot,
+                idle: cpu.idle as f32 / tot,
+                irq: cpu.irq.unwrap_or_default() as f32 / tot,
+                nice: cpu.nice as f32 / tot,
+                steal: cpu.steal.unwrap_or_default() as f32 / tot,
+            }),
         })
     }
 
