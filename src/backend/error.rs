@@ -2,6 +2,8 @@
 use std::io::{self, ErrorKind};
 
 #[cfg(target_os = "linux")]
+use nix::errno::Errno;
+#[cfg(target_os = "linux")]
 use procfs::ProcError;
 use thiserror::Error;
 
@@ -23,8 +25,9 @@ pub enum BackendError {
     #[error("IO error: {0}")]
     IOError(io::ErrorKind),
 
+    #[cfg(target_os = "linux")]
     #[error("unix error: {0}")]
-    NixError(#[from] nix::errno::Errno),
+    NixError(nix::errno::Errno),
 
     #[error("unknown error: {0}")]
     Other(String),
@@ -65,6 +68,17 @@ impl From<io::Error> for BackendError {
             ErrorKind::PermissionDenied => Self::NotAllowed,
             ErrorKind::NotFound => Self::NotFound,
             k => Self::IOError(k),
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl From<Errno> for BackendError {
+    fn from(err: Errno) -> Self {
+        match err {
+            Errno::EPERM | Errno::EACCES => Self::NotAllowed,
+            Errno::ENOENT => Self::NotFound,
+            k => Self::NixError(k),
         }
     }
 }
