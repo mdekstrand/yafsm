@@ -1,10 +1,6 @@
-use std::collections::HashMap;
-
-use itertools::Itertools;
-use log::*;
 use procfs::net::*;
 
-use super::data::{ProcFSData, ProcFSWrapper};
+use super::data::ProcFSWrapper;
 use crate::backend::{
     util::{window_norm_u64, Diff, WindowedObservation},
     BackendError, BackendResult,
