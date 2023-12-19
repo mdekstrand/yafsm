@@ -1,11 +1,11 @@
 //! Linux-specific backend with [procfs].
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use etc_os_release::OsRelease;
 use gethostname::gethostname;
 use log::*;
 use nix::sys::statvfs::statvfs;
-use procfs::process::{all_processes, Process as LinuxProcess};
+use procfs::process::Process as LinuxProcess;
 use procfs::*;
 use regex::RegexSet;
 
@@ -13,11 +13,13 @@ mod data;
 mod io;
 mod kernel;
 mod network;
+mod processes;
 
 use super::{error::*, util::Tick, MonitorBackend};
 use crate::model::cpu::LinuxCPU;
 use crate::model::*;
 use data::ProcFSWrapper;
+use processes::ProcessRecord;
 
 /// Linux-specific backend.
 pub struct LinuxBackend {
@@ -37,6 +39,8 @@ pub struct LinuxBackend {
     disk_filters: RegexSet,
     mounts: ProcFSWrapper<Vec<MountEntry>>,
     mount_filters: RegexSet,
+
+    processes: ProcFSWrapper<HashMap<i32, ProcessRecord>>,
 }
 
 impl LinuxBackend {
@@ -63,6 +67,7 @@ impl LinuxBackend {
             .unwrap(),
             mounts: ProcFSWrapper::new(mounts, &tick),
             mount_filters: RegexSet::new(&["^/(dev|proc|sys|run)(/|$)"]).unwrap(),
+            processes: ProcFSWrapper::new(ProcessRecord::load_all, &tick),
         })
     }
 }
@@ -76,27 +81,6 @@ impl LinuxBackend {
             Ok(v) => Ok(func(v)),
             Err(e) => Err(e.clone()),
         }
-    }
-
-    fn process_info(&self, proc: LinuxProcess) -> BackendResult<Process> {
-        trace!("looking up process {}", proc.pid);
-        let stat = proc.stat()?;
-        Ok(Process {
-            pid: proc.pid as u32,
-            ppid: Some(stat.ppid as u32),
-            name: stat.comm,
-            uid: proc.uid().ok(),
-            status: stat.state,
-            cpu_util: 0.0,
-            cpu_time: None,
-            cpu_utime: None,
-            cpu_stime: None,
-            mem_util: 0.0,
-            mem_rss: 0,
-            mem_virt: 0,
-            io_read: None,
-            io_write: None,
-        })
     }
 }
 
@@ -223,16 +207,20 @@ impl MonitorBackend for LinuxBackend {
     }
 
     fn processes<'a>(&'a self) -> BackendResult<Vec<Process>> {
+        let data = self.processes.data()?;
+        let cur = data.current.as_ref().ok_or(BackendError::NotAvailable)?;
+        let prev = data.previous.as_ref();
+        let cpu = self.kernel.cpu_time_diff()?;
+        let mem = self.memory.current()?;
+
         let mut procs = Vec::new();
-        for proc in all_processes()? {
-            match proc
-                .map_err(BackendError::from)
-                .and_then(|p| self.process_info(p))
-            {
-                Ok(proc) => procs.push(proc),
-                Err(e) => warn!("process {}: error fetching info", e),
+        for (pid, cp) in cur.iter() {
+            let op = prev.and_then(|m| m.get(pid));
+            if let Ok(proc) = self.process_info(cp, op, &cpu, &*mem) {
+                procs.push(proc)
             }
         }
+
         Ok(procs)
     }
 
@@ -289,6 +277,6 @@ impl MonitorBackend for LinuxBackend {
     }
 
     fn has_process_time(&self) -> bool {
-        false
+        true
     }
 }

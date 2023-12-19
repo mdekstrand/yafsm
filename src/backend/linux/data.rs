@@ -1,8 +1,6 @@
 //! Procfs object fetch.
 use std::cell::{Ref, RefCell};
-use std::fmt::Debug;
 
-use log::*;
 use procfs::{Current, CurrentSI, ProcResult};
 
 use crate::backend::BackendError;
@@ -60,14 +58,13 @@ impl<T: CurrentSI> ProcFSWrapper<T> {
     }
 }
 
-impl<T: Debug> ProcFSWrapper<T> {
+impl<T> ProcFSWrapper<T> {
     /// Get the current state, updating if necessary.
     pub(super) fn data<'a>(&'a self) -> BackendResult<Ref<'a, ProcFSData<T>>> {
         let mut state = self.state.borrow_mut();
         if !state.window.is_current() {
             let cur = (self.fetch)()?;
             state.window.update();
-            trace!("tick {} fetched data: {:#?}", state.window.tick(), cur);
             state.previous = state.current.replace(cur);
         }
         drop(state);

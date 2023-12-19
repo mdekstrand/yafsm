@@ -15,8 +15,8 @@ pub fn render_quicklook(frame: &mut Frame, state: &dyn MonitorData, area: Rect) 
         frame.render_widget(
             if let CPUExt::Linux(cpu) = cpu.extended {
                 Meter::new("CPU")
-                    .value(cpu.user, level_color(cpu.user))
-                    .value(cpu.system, Color::Blue)
+                    .value(cpu.user, Color::Green)
+                    .value(cpu.system, Color::Red)
                     .value(cpu.iowait, Color::Gray)
             } else {
                 Meter::new("CPU").value(cpu.utilization, level_color(cpu.utilization))

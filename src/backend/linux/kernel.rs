@@ -1,5 +1,7 @@
+use std::time::Duration;
+
 use log::*;
-use procfs::{CpuTime, KernelStats};
+use procfs::{CpuTime, KernelStats, LocalSystemInfo, SystemInfoInterface};
 
 use super::data::ProcFSWrapper;
 use crate::backend::{util::Diff, BackendError, BackendResult};
@@ -133,5 +135,15 @@ impl Diff for CpuTime {
         let cur: CpuTicks = self.into();
         let prev: CpuTicks = previous.into();
         cur.diff(&prev)
+    }
+}
+
+pub(super) fn ticks_to_duration(ticks: u64) -> Duration {
+    let tps = LocalSystemInfo.ticks_per_second();
+    // fast method for common configuration
+    if tps == 100 {
+        Duration::from_millis(ticks * 10)
+    } else {
+        Duration::from_secs_f64(ticks as f64 / tps as f64)
     }
 }
