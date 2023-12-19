@@ -46,6 +46,9 @@ pub trait NetworkInfo {
 }
 
 pub trait StorageInfo {
+    /// Get the disks.
+    fn disk_io(&self) -> Result<Vec<DiskIO>>;
+
     /// Get the filesystems.
     fn filesystems(&self) -> Result<Vec<Filesystem>>;
 }

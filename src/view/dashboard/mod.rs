@@ -20,7 +20,7 @@ use summaries::*;
 use crate::{backend::error::BackendErrorFilter, model::MonitorState};
 
 use self::{
-    iotables::{render_filesystems, render_network},
+    iotables::{render_disks, render_filesystems, render_network},
     process_table::render_process_table,
 };
 
@@ -80,6 +80,7 @@ pub fn render_dashboard<'b>(frame: &mut Frame, state: &MonitorState<'b>) -> Resu
 
     let mut lsg = TableGroup::new();
     render_network(state, &mut lsg)?;
+    render_disks(state, &mut lsg)?;
     render_filesystems(state, &mut lsg)?;
 
     let pt_area = if lsg.n_tables() > 0 {

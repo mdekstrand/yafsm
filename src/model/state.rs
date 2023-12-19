@@ -98,6 +98,10 @@ impl<'back> NetworkInfo for MonitorState<'back> {
 }
 
 impl<'back> StorageInfo for MonitorState<'back> {
+    fn disk_io(&self) -> BackendResult<Vec<DiskIO>> {
+        self.backend.disks()
+    }
+
     fn filesystems(&self) -> BackendResult<Vec<Filesystem>> {
         self.backend.filesystems()
     }

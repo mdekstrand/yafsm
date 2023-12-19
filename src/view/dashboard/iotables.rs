@@ -31,6 +31,23 @@ pub fn render_network(state: &dyn MonitorData, tg: &mut TableGroup) -> Result<()
     Ok(())
 }
 
+pub fn render_disks(state: &dyn MonitorData, tg: &mut TableGroup) -> Result<()> {
+    if let Some(disks) = state.disk_io().acceptable_to_opt()? {
+        let disks = disks
+            .into_iter()
+            .sorted_by(|n1, n2| n1.name.cmp(&n2.name))
+            .collect_vec();
+        let tbl = tg.add_table("DISK", ["RB/s", "WB/s"]);
+        for d in disks {
+            tbl.add_row(
+                d.name,
+                [fmt_int_bytes(d.rx_bytes), fmt_int_bytes(d.tx_bytes)],
+            )
+        }
+    }
+    Ok(())
+}
+
 pub fn render_filesystems(state: &dyn MonitorData, tg: &mut TableGroup) -> Result<()> {
     if let Some(disks) = state.filesystems().acceptable_to_opt()? {
         let disks = disks
