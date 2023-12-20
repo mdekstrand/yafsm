@@ -123,7 +123,7 @@ impl MonitorBackend for LinuxBackend {
 
         Ok(CPU {
             utilization: cpu.total_used as f32 / tot,
-            extended: cpu::CPUExt::Linux(LinuxCPU {
+            extended: cpu::ExtendedCPU::Linux(LinuxCPU {
                 user: cpu.user as f32 / tot,
                 system: cpu.system as f32 / tot,
                 iowait: cpu.iowait.unwrap_or_default() as f32 / tot,
@@ -150,6 +150,12 @@ impl MonitorBackend for LinuxBackend {
             },
             free: mem.mem_free,
             total: mem.mem_total,
+            extended: ExtendedMemory::Linux(memory::LinuxMemory {
+                active: mem.active,
+                inactive: mem.inactive,
+                buffers: mem.buffers,
+                cached: mem.cached,
+            }),
         })
     }
 

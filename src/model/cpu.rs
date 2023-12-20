@@ -7,11 +7,11 @@ pub struct CPU {
     pub utilization: f32,
 
     /// Extended CPU info.
-    pub extended: CPUExt,
+    pub extended: ExtendedCPU,
 }
 
 #[derive(Debug, Clone)]
-pub enum CPUExt {
+pub enum ExtendedCPU {
     None,
     #[allow(dead_code)]
     Linux(LinuxCPU),

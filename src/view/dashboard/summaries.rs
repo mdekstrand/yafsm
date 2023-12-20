@@ -4,7 +4,8 @@ use ratatui::style::{Color, Style, Stylize};
 
 use crate::backend::BackendError;
 use crate::backend::BackendResult;
-use crate::model::cpu::CPUExt;
+use crate::model::cpu::ExtendedCPU;
+use crate::model::ExtendedMemory;
 use crate::model::MonitorData;
 use crate::view::widgets::infocols::{ICEntry, InfoCols};
 
@@ -15,7 +16,7 @@ pub fn cpu_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
             .pct(state.global_cpu()?.utilization * 100.0)
             .value_style(Style::new().bold()),
     );
-    if let CPUExt::Linux(lcpu) = cpu.extended {
+    if let ExtendedCPU::Linux(lcpu) = cpu.extended {
         display = display
             .add_pct("user", lcpu.user * 100.0)
             .add_pct("system", lcpu.system * 100.0)
@@ -42,7 +43,7 @@ pub fn cpu_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
 
 pub fn memory_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
     let mem = state.memory()?;
-    Ok(InfoCols::new()
+    let ic = InfoCols::new()
         .add(
             ICEntry::new("MEM")
                 .pct(mem.used_frac() * 100.0)
@@ -50,12 +51,21 @@ pub fn memory_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
         )
         .add_bytes("total", mem.total)
         .add_bytes("used", mem.used)
-        .add_bytes("avail", mem.free + mem.freeable))
+        .add_bytes("avail", mem.free + mem.freeable);
+    let ic = match mem.extended {
+        ExtendedMemory::None => ic,
+        ExtendedMemory::Linux(linux) => ic
+            .add_bytes("active", linux.active)
+            .add_bytes("inacti", linux.inactive)
+            .add_bytes("buffers", linux.buffers)
+            .add_bytes("cached", linux.cached),
+    };
+    Ok(ic)
 }
 
 pub fn swap_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
     let swp = state.swap()?;
-    Ok(InfoCols::new()
+    let ic = InfoCols::new()
         .add(
             ICEntry::new("SWP")
                 .pct(swp.used_frac() * 100.0)
@@ -63,7 +73,8 @@ pub fn swap_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
         )
         .add_bytes("total", swp.total)
         .add_bytes("used", swp.used)
-        .add_bytes("free", swp.free))
+        .add_bytes("free", swp.free);
+    Ok(ic)
 }
 
 pub fn gpu_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {

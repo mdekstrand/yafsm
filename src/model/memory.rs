@@ -11,6 +11,8 @@ pub struct Memory {
     pub free: u64,
     /// The total memory (in bytes).
     pub total: u64,
+    /// Extended memory statistics.
+    pub extended: ExtendedMemory,
 }
 
 impl Memory {
@@ -23,4 +25,18 @@ impl Memory {
     pub fn freeable_frac(&self) -> f32 {
         self.freeable as f32 / self.total as f32
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum ExtendedMemory {
+    None,
+    Linux(LinuxMemory),
+}
+
+#[derive(Debug, Clone)]
+pub struct LinuxMemory {
+    pub active: u64,
+    pub inactive: u64,
+    pub buffers: u64,
+    pub cached: u64,
 }

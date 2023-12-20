@@ -17,12 +17,12 @@ pub mod source;
 pub mod state;
 pub mod swap;
 
-pub use cpu::CPU;
+pub use cpu::{ExtendedCPU, CPU};
 pub use disk::DiskIO;
 pub use fs::Filesystem;
 pub use gpu::GPUStats;
 pub use load::{LoadAvg, Pressure, SystemPressure};
-pub use memory::Memory;
+pub use memory::{ExtendedMemory, Memory};
 pub use network::NetworkStats;
 pub use options::Options;
 pub use process::{ProcSortOrder, Process, ProcessCommandInfo};

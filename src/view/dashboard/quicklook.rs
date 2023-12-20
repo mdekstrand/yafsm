@@ -5,7 +5,7 @@ use ratatui::prelude::*;
 use ratatui::widgets::Paragraph;
 
 use crate::backend::error::BackendErrorFilter;
-use crate::model::cpu::CPUExt;
+use crate::model::cpu::ExtendedCPU;
 use crate::model::MonitorData;
 use crate::view::util::level_color;
 use crate::view::widgets::meter::Meter;
@@ -13,7 +13,7 @@ use crate::view::widgets::meter::Meter;
 pub fn render_quicklook(frame: &mut Frame, state: &dyn MonitorData, area: Rect) -> Result<()> {
     if let Some(cpu) = state.global_cpu().acceptable_to_opt()? {
         frame.render_widget(
-            if let CPUExt::Linux(cpu) = cpu.extended {
+            if let ExtendedCPU::Linux(cpu) = cpu.extended {
                 Meter::new("CPU")
                     .value(cpu.user, Color::Green)
                     .value(cpu.system, Color::Red)
