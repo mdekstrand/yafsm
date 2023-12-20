@@ -9,7 +9,7 @@ pub(super) use procfs::process::Process as LinuxProcess;
 
 use crate::backend::linux::kernel::ticks_to_duration;
 use crate::backend::util::window_norm_u64;
-use crate::backend::BackendResult;
+use crate::backend::{BackendResult, MonitorBackend};
 use crate::model::Process;
 
 use super::kernel::CpuTicks;
@@ -65,6 +65,7 @@ impl LinuxBackend {
     ) -> BackendResult<Process> {
         trace!("looking up process {}", cur.proc.pid);
         let time = cur.stat.utime + cur.stat.stime;
+        let ncpus = self.cpu_count()?;
         let rss = cur.stat.rss_bytes().get();
         let mut proc = Process {
             pid: cur.proc.pid as u32,
@@ -72,7 +73,7 @@ impl LinuxBackend {
             name: cur.stat.comm.clone(),
             uid: cur.proc.uid().ok(),
             status: cur.stat.state,
-            cpu_util: 0.0,
+            cpu_util: time as f32 / ncpus as f32 / cpu.total as f32,
             cpu_time: Some(ticks_to_duration(time)),
             cpu_utime: Some(ticks_to_duration(cur.stat.utime)),
             cpu_stime: Some(ticks_to_duration(cur.stat.stime)),
