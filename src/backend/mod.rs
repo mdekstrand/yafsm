@@ -78,7 +78,16 @@ pub trait MonitorBackend {
         Err(BackendError::NotSupported)
     }
 
+    /// Get the GPUs.
+    fn gpus(&mut self) -> BackendResult<Vec<GPUInfo>> {
+        Err(BackendError::NotAvailable)
+    }
+
     fn has_process_time(&self) -> bool {
+        false
+    }
+
+    fn has_gpus(&mut self) -> bool {
         false
     }
 }

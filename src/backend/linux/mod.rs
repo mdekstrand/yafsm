@@ -10,6 +10,7 @@ use procfs::*;
 use regex::RegexSet;
 
 mod data;
+mod gpu;
 mod io;
 mod kernel;
 mod network;
