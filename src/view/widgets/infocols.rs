@@ -18,7 +18,7 @@ const COL_WIDTH: u16 = 1 + LABEL_WIDTH + 2 + 1 + VAL_WIDTH + 1;
 const COL_ROWS: u16 = 4;
 
 /// Wrapper for value types in info columns that control their display.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ICValue {
     /// Empty value
     Blank,
@@ -185,16 +185,26 @@ impl Widget for InfoCols {
                 v_style = v_style.patch(vs);
             }
 
-            buf.set_stringn(x + 1, y, e.label, LABEL_WIDTH as usize, l_style);
-            buf.set_stringn(
-                // compute the position to right-align the display
-                // value formats use ASCII chars, so we can use len()
-                x + 1 + LABEL_WIDTH + 2 + 1 + (VAL_WIDTH - min(v_str.len() as u16, VAL_WIDTH)),
-                y,
-                v_str,
-                LABEL_WIDTH as usize,
-                v_style,
-            );
+            if e.value == ICValue::Blank {
+                buf.set_stringn(
+                    x + 1,
+                    y,
+                    e.label,
+                    (LABEL_WIDTH + VAL_WIDTH + 2) as usize,
+                    l_style,
+                );
+            } else {
+                buf.set_stringn(x + 1, y, e.label, LABEL_WIDTH as usize, l_style);
+                buf.set_stringn(
+                    // compute the position to right-align the display
+                    // value formats use ASCII chars, so we can use len()
+                    x + 1 + LABEL_WIDTH + 2 + 1 + (VAL_WIDTH - min(v_str.len() as u16, VAL_WIDTH)),
+                    y,
+                    v_str,
+                    LABEL_WIDTH as usize,
+                    v_style,
+                );
+            }
 
             // done drawing — set up position for next entry
             if row >= COL_ROWS - 1 {
