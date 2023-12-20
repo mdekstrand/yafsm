@@ -70,7 +70,7 @@ impl LinuxBackend {
             ])
             .unwrap(),
             mounts: ProcFSWrapper::new(mounts, &tick),
-            mount_filters: RegexSet::new(&["^/(dev|proc|sys|run)(/|$)"]).unwrap(),
+            mount_filters: RegexSet::new(&["^/(dev|proc|sys|run|snap)(/|$)"]).unwrap(),
             processes: ProcFSWrapper::new(ProcessRecord::load_all, &tick),
         })
     }
