@@ -17,7 +17,7 @@ pub fn render_quicklook(frame: &mut Frame, state: &dyn MonitorData, area: Rect) 
                 Meter::new("CPU")
                     .value(cpu.user, Color::Green)
                     .value(cpu.system, Color::Red)
-                    .value(cpu.iowait, Color::Gray)
+                    .value(cpu.iowait, Color::DarkGray)
             } else {
                 Meter::new("CPU").value(cpu.utilization, level_color(cpu.utilization))
             },
