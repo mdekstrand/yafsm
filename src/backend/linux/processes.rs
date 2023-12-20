@@ -73,7 +73,7 @@ impl LinuxBackend {
             name: cur.stat.comm.clone(),
             uid: cur.uid,
             status: cur.stat.state,
-            cpu_util: (time * ncpus) as f32 / cpu.total as f32,
+            cpu_util: (time * ncpus as u64) as f32 / cpu.total as f32,
             cpu_time: Some(ticks_to_duration(time)),
             cpu_utime: Some(ticks_to_duration(cur.stat.utime)),
             cpu_stime: Some(ticks_to_duration(cur.stat.stime)),
