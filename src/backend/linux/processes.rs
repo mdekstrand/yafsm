@@ -5,8 +5,6 @@ use log::*;
 use procfs::process::{all_processes, Io, Stat};
 use procfs::{Meminfo, ProcResult, WithCurrentSystemInfo};
 
-pub(super) use procfs::process::Process as LinuxProcess;
-
 use crate::backend::linux::kernel::ticks_to_duration;
 use crate::backend::util::window_norm_u64;
 use crate::backend::{BackendResult, MonitorBackend};
@@ -16,7 +14,8 @@ use super::kernel::CpuTicks;
 use super::LinuxBackend;
 
 pub(super) struct ProcessRecord {
-    pub proc: LinuxProcess,
+    pub pid: i32,
+    pub uid: Option<u32>,
     pub stat: Stat,
     pub io: Option<Io>,
     pub fetched: Instant,
@@ -44,7 +43,8 @@ impl ProcessRecord {
             procs.insert(
                 proc.pid,
                 ProcessRecord {
-                    proc,
+                    pid: proc.pid,
+                    uid: proc.uid().ok(),
                     stat,
                     io,
                     fetched: Instant::now(),
@@ -63,15 +63,15 @@ impl LinuxBackend {
         cpu: &CpuTicks,
         mem: &Meminfo,
     ) -> BackendResult<Process> {
-        trace!("looking up process {}", cur.proc.pid);
+        trace!("looking up process {}", cur.pid);
         let time = cur.stat.utime + cur.stat.stime;
         let ncpus = self.cpu_count()?;
         let rss = cur.stat.rss_bytes().get();
         let mut proc = Process {
-            pid: cur.proc.pid as u32,
+            pid: cur.pid as u32,
             ppid: Some(cur.stat.ppid as u32),
             name: cur.stat.comm.clone(),
-            uid: cur.proc.uid().ok(),
+            uid: cur.uid,
             status: cur.stat.state,
             cpu_util: time as f32 / ncpus as f32 / cpu.total as f32,
             cpu_time: Some(ticks_to_duration(time)),
