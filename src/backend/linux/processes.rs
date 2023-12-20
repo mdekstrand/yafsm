@@ -90,13 +90,6 @@ impl LinuxBackend {
         if let Some(prev) = prev {
             let delta_t = cur.fetched.duration_since(prev.fetched);
             let pt = prev.stat.utime + prev.stat.stime;
-            proc.cpu_time = proc.cpu_time.map(|t| t - ticks_to_duration(pt));
-            proc.cpu_utime = proc
-                .cpu_utime
-                .map(|t| t - ticks_to_duration(prev.stat.utime));
-            proc.cpu_stime = proc
-                .cpu_stime
-                .map(|t| t - ticks_to_duration(prev.stat.stime));
             if let Some(io) = prev.io {
                 proc.io_read = proc
                     .io_read
