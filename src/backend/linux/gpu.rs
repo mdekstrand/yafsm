@@ -14,6 +14,10 @@ impl GPUs {
     pub(super) fn init() -> BackendResult<GPUs> {
         let nvidia = match Nvml::init() {
             Ok(n) => Some(n),
+            Err(NvmlError::LibloadingError(e)) => {
+                debug!("error loading NVML: {}", e);
+                None
+            }
             Err(NvmlError::DriverNotLoaded | NvmlError::NoPermission) => {
                 debug!("NVML could not be loaded");
                 None
