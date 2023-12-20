@@ -18,6 +18,7 @@ pub(super) struct RefreshRecord {
     duration: Duration,
 }
 
+#[allow(dead_code)]
 impl RefreshRecord {
     /// Create a record without a reference to a system tick.
     pub fn new() -> RefreshRecord {
@@ -110,6 +111,7 @@ impl Tick {
         }
     }
 
+    #[allow(dead_code)]
     pub fn advance(&mut self) {
         *self.tick.borrow_mut() += 1
     }

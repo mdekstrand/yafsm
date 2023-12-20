@@ -13,6 +13,7 @@ pub struct CPU {
 #[derive(Debug, Clone)]
 pub enum CPUExt {
     None,
+    #[allow(dead_code)]
     Linux(LinuxCPU),
 }
 
