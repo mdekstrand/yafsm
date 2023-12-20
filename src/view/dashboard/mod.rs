@@ -56,6 +56,7 @@ pub fn render_dashboard<'b>(frame: &mut Frame, state: &MonitorState<'b>) -> Resu
         (cpu_summary(state).acceptable_to_opt()?, 1),
         (memory_summary(state).acceptable_to_opt()?, 2),
         (swap_summary(state).acceptable_to_opt()?, 4),
+        (gpu_summary(state).acceptable_to_opt()?, 6),
         (pressure_summary(state).acceptable_to_opt()?, 5),
         (load_summary(state).acceptable_to_opt()?, 3),
     ];

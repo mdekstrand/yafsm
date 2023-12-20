@@ -2,6 +2,7 @@
 
 use ratatui::style::{Color, Style, Stylize};
 
+use crate::backend::BackendError;
 use crate::backend::BackendResult;
 use crate::model::cpu::CPUExt;
 use crate::model::MonitorData;
@@ -63,6 +64,38 @@ pub fn swap_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
         .add_bytes("total", swp.total)
         .add_bytes("used", swp.used)
         .add_bytes("free", swp.free))
+}
+
+pub fn gpu_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
+    let gpus = state.gpus()?;
+    if gpus.is_empty() {
+        Err(BackendError::NotAvailable)
+    } else if gpus.len() == 1 {
+        let gpu = &gpus[0];
+        Ok(InfoCols::new()
+            .add(ICEntry::new(gpu.name.clone()))
+            .add_pct("gpu", gpu.gpu_util / 100.0)
+            .add_pct("mem", gpu.mem_util / 100.0)
+            .add_bytes("avail", gpu.mem_avail))
+    } else {
+        let n = gpus.len();
+        let tot_gpu: f32 = gpus.iter().map(|g| g.gpu_util).sum();
+        let tot_mem_util: f32 = gpus.iter().map(|g| g.mem_util).sum();
+        let tot_mem_avail: u64 = gpus.iter().map(|g| g.mem_avail).sum();
+        let mut ic = InfoCols::new()
+            .add_count("GPUs", n as u64)
+            .add_pct("gpu", tot_gpu as f32 / n as f32 / 100.0)
+            .add_pct("gpu", tot_mem_util as f32 / n as f32 / 100.0)
+            .add_bytes("avail", tot_mem_avail);
+        for gpu in gpus.iter() {
+            ic = ic
+                .add(ICEntry::new(gpu.name.clone()))
+                .add_pct("gpu", gpu.gpu_util / 100.0)
+                .add_pct("mem", gpu.mem_util / 100.0)
+                .add_bytes("avail", gpu.mem_avail);
+        }
+        Ok(ic)
+    }
 }
 
 pub fn pressure_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
