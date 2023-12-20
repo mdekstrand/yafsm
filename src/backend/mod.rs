@@ -9,7 +9,7 @@ pub mod linux;
 pub mod sysinfo;
 pub mod util;
 
-pub use error::{BackendError, BackendResult};
+pub use error::{BackendError, BackendErrorFilter, BackendResult};
 
 #[cfg(target_os = "linux")]
 pub use linux::LinuxBackend as DefaultBackend;
@@ -79,7 +79,7 @@ pub trait MonitorBackend {
     }
 
     /// Get the GPUs.
-    fn gpus(&self) -> BackendResult<Vec<GPUInfo>> {
+    fn gpus(&self) -> BackendResult<Vec<GPUStats>> {
         Err(BackendError::NotAvailable)
     }
 

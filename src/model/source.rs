@@ -53,7 +53,7 @@ pub trait StorageInfo {
     fn filesystems(&self) -> Result<Vec<Filesystem>>;
 }
 
-pub trait SystemGPU {
+pub trait GPUInfo {
     /// Get the GPUs.
-    fn gpus(&self) -> Result<Vec<GPUInfo>>;
+    fn gpus(&self) -> Result<Vec<GPUStats>>;
 }

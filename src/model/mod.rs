@@ -20,14 +20,14 @@ pub mod swap;
 pub use cpu::CPU;
 pub use disk::DiskIO;
 pub use fs::Filesystem;
-pub use gpu::GPUInfo;
+pub use gpu::GPUStats;
 pub use load::{LoadAvg, Pressure, SystemPressure};
 pub use memory::Memory;
 pub use network::NetworkStats;
 pub use options::Options;
 pub use process::{ProcSortOrder, Process, ProcessCommandInfo};
 pub use source::{
-    NetworkInfo, RunningProcesses, StorageInfo, SystemGPU, SystemInfo, SystemResources,
+    GPUInfo, NetworkInfo, RunningProcesses, StorageInfo, SystemInfo, SystemResources,
 };
 pub use state::MonitorState;
 pub use swap::Swap;
@@ -40,7 +40,7 @@ use crate::backend::MonitorBackend;
 /// be helpful.  It also has methods that are somewhat duplicative of [MonitorBackend],
 /// but many of them handle checking whether that feature should be enabled.
 pub trait MonitorData:
-    SystemInfo + SystemResources + RunningProcesses + NetworkInfo + StorageInfo + SystemGPU
+    SystemInfo + SystemResources + RunningProcesses + NetworkInfo + StorageInfo + GPUInfo
 {
     fn backend(&self) -> &dyn MonitorBackend;
     fn lookup_user(&self, uid: u32) -> Result<Option<String>>;

@@ -4,6 +4,8 @@ use std::io::{self, ErrorKind};
 #[cfg(target_os = "linux")]
 use nix::errno::Errno;
 #[cfg(target_os = "linux")]
+use nvml_wrapper::error::NvmlError;
+#[cfg(target_os = "linux")]
 use procfs::ProcError;
 use thiserror::Error;
 
@@ -107,6 +109,20 @@ impl From<etc_os_release::Error> for BackendError {
             Error::Open { err, .. } => BackendError::IOError(err.kind()),
             Error::Read { err } => BackendError::IOError(err.kind()),
             _ => generic_err("unknown OS release error"),
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+impl From<NvmlError> for BackendError {
+    fn from(err: NvmlError) -> Self {
+        use NvmlError::*;
+        match err {
+            NoPermission => BackendError::NotAllowed,
+            NotFound | GpuLost => BackendError::NotFound,
+            DriverNotLoaded => BackendError::NotAvailable,
+            NotSupported => BackendError::NotSupported,
+            _ => generic_err(format!("NVML error: {}", err)),
         }
     }
 }

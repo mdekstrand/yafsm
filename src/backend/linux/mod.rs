@@ -20,6 +20,7 @@ use super::{error::*, util::Tick, MonitorBackend};
 use crate::model::cpu::LinuxCPU;
 use crate::model::*;
 use data::ProcFSWrapper;
+use gpu::GPUs;
 use processes::ProcessRecord;
 
 /// Linux-specific backend.
@@ -34,6 +35,7 @@ pub struct LinuxBackend {
     cpu_pressure: ProcFSWrapper<CpuPressure>,
     mem_pressure: ProcFSWrapper<MemoryPressure>,
     io_pressure: ProcFSWrapper<IoPressure>,
+    gpu: GPUs,
 
     net_ifs: ProcFSWrapper<net::InterfaceDeviceStatus>,
     disks: ProcFSWrapper<DiskStats>,
@@ -57,6 +59,7 @@ impl LinuxBackend {
             cpu_pressure: ProcFSWrapper::for_current(&tick),
             mem_pressure: ProcFSWrapper::for_current(&tick),
             io_pressure: ProcFSWrapper::for_current(&tick),
+            gpu: GPUs::init()?,
             net_ifs: ProcFSWrapper::for_current(&tick),
             disks: ProcFSWrapper::for_current(&tick),
             disk_filters: RegexSet::new(&[
@@ -205,6 +208,14 @@ impl MonitorBackend for LinuxBackend {
                 total: ip.full.total,
             },
         })
+    }
+
+    fn gpus(&self) -> BackendResult<Vec<GPUStats>> {
+        self.gpu.gpus()
+    }
+
+    fn has_gpus(&mut self) -> bool {
+        self.gpu.gpu_count() > 0
     }
 
     fn processes<'a>(&'a self) -> BackendResult<Vec<Process>> {
