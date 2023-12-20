@@ -79,7 +79,7 @@ pub trait MonitorBackend {
     }
 
     /// Get the GPUs.
-    fn gpus(&mut self) -> BackendResult<Vec<GPUInfo>> {
+    fn gpus(&self) -> BackendResult<Vec<GPUInfo>> {
         Err(BackendError::NotAvailable)
     }
 

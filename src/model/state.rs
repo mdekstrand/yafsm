@@ -106,3 +106,9 @@ impl<'back> StorageInfo for MonitorState<'back> {
         self.backend.filesystems()
     }
 }
+
+impl<'back> SystemGPU for MonitorState<'back> {
+    fn gpus(&self) -> BackendResult<Vec<GPUInfo>> {
+        self.backend.gpus()
+    }
+}
