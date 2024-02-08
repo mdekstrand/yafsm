@@ -85,8 +85,8 @@ pub fn gpu_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
         let gpu = &gpus[0];
         Ok(InfoCols::new()
             .add(ICEntry::new(gpu.name.clone()))
-            .add_pct("gpu", gpu.gpu_util / 100.0)
-            .add_pct("mem", gpu.mem_util / 100.0)
+            .add_pct("gpu", gpu.gpu_util * 100.0)
+            .add_pct("mem", gpu.mem_util * 100.0)
             .add_bytes("avail", gpu.mem_avail))
     } else {
         let n = gpus.len();

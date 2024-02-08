@@ -64,7 +64,7 @@ impl GPUs {
             };
             stats.push(GPUStats {
                 name: dev.name()?,
-                gpu_util: util.gpu as f32,
+                gpu_util: util.gpu as f32 / 100.0,
                 mem_util: mem.used as f32 / mem.total as f32,
                 mem_avail: mem.free,
                 mem_total: mem.total,
