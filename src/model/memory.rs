@@ -39,4 +39,6 @@ pub struct LinuxMemory {
     pub inactive: u64,
     pub buffers: u64,
     pub cached: u64,
+    pub reclaimable: Option<u64>,
+    pub arc: Option<u64>,
 }

@@ -1,10 +1,16 @@
+use std::io::{BufRead, ErrorKind};
+use std::sync::OnceLock;
 use std::time::Duration;
+use std::{fs::File, io::BufReader};
 
 use log::*;
-use procfs::{CpuTime, KernelStats, LocalSystemInfo, SystemInfoInterface};
+use procfs::{CpuTime, KernelStats, LocalSystemInfo, ProcResult, SystemInfoInterface};
+use regex::Regex;
 
 use super::data::ProcFSWrapper;
 use crate::backend::{util::Diff, BackendError, BackendResult};
+
+static ZFS_ARCSTAT_REGEX: OnceLock<Regex> = OnceLock::new();
 
 /// Total CPU time.
 fn total_time(cpu: &CpuTime) -> u64 {
@@ -146,4 +152,35 @@ pub(super) fn ticks_to_duration(ticks: u64) -> Duration {
     } else {
         Duration::from_secs_f64(ticks as f64 / tps as f64)
     }
+}
+
+#[derive(Default, Clone)]
+pub(super) struct ZFSArcInfo {
+    pub size: u64,
+    pub min: u64,
+}
+
+pub(super) fn read_zfs_arcstats() -> ProcResult<Option<ZFSArcInfo>> {
+    let pat = ZFS_ARCSTAT_REGEX
+        .get_or_init(|| Regex::new("^([a-z_]+)\\s+\\d+\\s+(\\d+)").expect("invalid regex"));
+    let file = match File::open("/proc/spl/kstat/zfs/arcstats") {
+        Ok(f) => f,
+        Err(e) if e.kind() == ErrorKind::NotFound => return Ok(None),
+        Err(e) => return Err(e.into()),
+    };
+    let read = BufReader::new(file);
+    let mut zfs = ZFSArcInfo::default();
+    for line in read.lines() {
+        let line = line?;
+        if let Some(caps) = pat.captures(&line) {
+            if let Some(val) = caps.get(2) {
+                match caps.get(1).map(|m| m.as_str()) {
+                    Some("size") => zfs.size = val.as_str().parse()?,
+                    Some("c_min") => zfs.min = val.as_str().parse()?,
+                    _ => (),
+                }
+            }
+        }
+    }
+    Ok(Some(zfs))
 }

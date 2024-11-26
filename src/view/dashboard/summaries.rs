@@ -54,11 +54,18 @@ pub fn memory_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
         .add_bytes("avail", mem.free + mem.freeable);
     let ic = match mem.extended {
         ExtendedMemory::None => ic,
-        ExtendedMemory::Linux(linux) => ic
-            .add_bytes("active", linux.active)
-            .add_bytes("inacti", linux.inactive)
-            .add_bytes("buffers", linux.buffers)
-            .add_bytes("cached", linux.cached),
+        ExtendedMemory::Linux(linux) => {
+            let mut ic = ic
+                .add_bytes("active", linux.active)
+                .add_bytes("inacti", linux.inactive)
+                .add_bytes("cached", linux.cached);
+            if let Some(zfs) = linux.arc {
+                ic = ic.add_bytes("zfsarc", zfs)
+            } else {
+                ic = ic.add_bytes("buffers", linux.buffers)
+            }
+            ic
+        }
     };
     Ok(ic)
 }

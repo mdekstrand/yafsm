@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 
 use etc_os_release::OsRelease;
 use gethostname::gethostname;
+use kernel::{read_zfs_arcstats, ZFSArcInfo};
 use log::*;
 use nix::sys::statvfs::statvfs;
 use procfs::process::Process as LinuxProcess;
@@ -30,6 +31,7 @@ pub struct LinuxBackend {
     cpus: BackendResult<CpuInfo>,
     kernel: ProcFSWrapper<KernelStats>,
     memory: ProcFSWrapper<Meminfo>,
+    zfs: ProcFSWrapper<Option<ZFSArcInfo>>,
 
     load: ProcFSWrapper<LoadAverage>,
     cpu_pressure: ProcFSWrapper<CpuPressure>,
@@ -55,6 +57,7 @@ impl LinuxBackend {
             cpus: CpuInfo::current().map_err(|e| e.into()),
             kernel: ProcFSWrapper::for_curent_si(&tick),
             memory: ProcFSWrapper::for_current(&tick),
+            zfs: ProcFSWrapper::new(read_zfs_arcstats, &tick),
             load: ProcFSWrapper::for_current(&tick),
             cpu_pressure: ProcFSWrapper::for_current(&tick),
             mem_pressure: ProcFSWrapper::for_current(&tick),
@@ -137,14 +140,20 @@ impl MonitorBackend for LinuxBackend {
 
     fn memory(&self) -> BackendResult<Memory> {
         let mem = self.memory.current()?;
+        let mut arc = None;
+        let mut zfs_freeable = 0;
+        if let Some(zfs) = self.zfs.current()?.as_ref() {
+            arc = Some(zfs.size);
+            zfs_freeable = zfs.size - zfs.min;
+        }
         Ok(Memory {
             used: if let Some(avail) = mem.mem_available {
-                mem.mem_total - avail
+                mem.mem_total - avail - zfs_freeable
             } else {
                 mem.active + mem.inactive
             },
             freeable: if let Some(avail) = mem.mem_available {
-                avail - mem.mem_free
+                avail - mem.mem_free + zfs_freeable
             } else {
                 mem.cached + mem.buffers
             },
@@ -155,6 +164,8 @@ impl MonitorBackend for LinuxBackend {
                 inactive: mem.inactive,
                 buffers: mem.buffers,
                 cached: mem.cached,
+                reclaimable: mem.s_reclaimable,
+                arc,
             }),
         })
     }
