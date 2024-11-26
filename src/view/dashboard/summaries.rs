@@ -45,7 +45,7 @@ pub fn memory_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
     let mem = state.memory()?;
     let ic = InfoCols::new()
         .add(
-            ICEntry::new("MEM")
+            ICEntry::new("MEMORY")
                 .pct(mem.used_frac() * 100.0)
                 .value_style(Style::new().bold()),
         )
@@ -79,7 +79,7 @@ pub fn swap_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
     let swp = state.swap()?;
     let ic = InfoCols::new()
         .add(
-            ICEntry::new("SWP")
+            ICEntry::new("SWAP")
                 .pct(swp.used_frac() * 100.0)
                 .value_style(Style::new().bold()),
         )
