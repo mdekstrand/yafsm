@@ -44,6 +44,7 @@ pub fn render_quicklook(frame: &mut Frame, state: &dyn MonitorData, area: Rect) 
         frame.render_widget(
             Meter::new("MEM")
                 .value(mem.used_frac(), level_color(mem.used_frac()))
+                .value(mem.shared_frac(), Color::Cyan)
                 .value(mem.freeable_frac(), Color::DarkGray),
             Rect {
                 y: area.y + 2,

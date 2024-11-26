@@ -61,9 +61,14 @@ pub fn memory_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
                 .add_bytes("cached", linux.cached);
             if let Some(zfs) = linux.arc {
                 ic = ic.add_bytes("zfsarc", zfs)
-            } else {
-                ic = ic.add_bytes("buffers", linux.buffers)
             }
+            if let Some(shared) = linux.shared {
+                ic = ic.add_bytes("shared", shared);
+            }
+            if let Some(reclaim) = linux.reclaimable {
+                ic = ic.add_bytes("reclm", reclaim);
+            }
+            ic = ic.add_bytes("buffers", linux.buffers);
             ic
         }
     };

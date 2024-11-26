@@ -164,6 +164,7 @@ impl MonitorBackend for LinuxBackend {
                 inactive: mem.inactive,
                 buffers: mem.buffers,
                 cached: mem.cached,
+                shared: mem.shmem,
                 reclaimable: mem.s_reclaimable,
                 arc,
             }),

@@ -16,14 +16,27 @@ pub struct Memory {
 }
 
 impl Memory {
-    /// Compute the used memory as a fraction of total.
+    /// Compute the used (non-shared) memory as a fraction of total.
     pub fn used_frac(&self) -> f32 {
-        self.used as f32 / self.total as f32
+        (self.used - self.shared_mem()) as f32 / self.total as f32
+    }
+
+    /// Compute the shared memory as a fraction of total.
+    pub fn shared_frac(&self) -> f32 {
+        self.shared_mem() as f32 / self.total as f32
     }
 
     /// Compute the freeable memory as a fraction of total.
     pub fn freeable_frac(&self) -> f32 {
         self.freeable as f32 / self.total as f32
+    }
+
+    fn shared_mem(&self) -> u64 {
+        if let ExtendedMemory::Linux(linux) = &self.extended {
+            linux.shared.unwrap_or_default()
+        } else {
+            0
+        }
     }
 }
 
@@ -39,6 +52,7 @@ pub struct LinuxMemory {
     pub inactive: u64,
     pub buffers: u64,
     pub cached: u64,
+    pub shared: Option<u64>,
     pub reclaimable: Option<u64>,
     pub arc: Option<u64>,
 }
