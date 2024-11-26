@@ -79,11 +79,13 @@ impl Widget for Meter {
             }
 
             let mut style = Style::new().fg(ent.color);
-            if partial > 0
-                && i + 1 < self.values.len()
-                && self.values[i + 1].value * avail_ticks as f32 >= 1.0
-            {
-                style = style.bg(self.values[i + 1].color);
+            if partial > 0 {
+                for j in (i + 1)..self.values.len() {
+                    if self.values[j].value * avail_ticks as f32 >= 1.0 {
+                        style = style.bg(self.values[j].color);
+                        break;
+                    }
+                }
             }
             trace!("{}{}: writing {} characters", self.label, i, bar.len());
             buf.set_string(b.x + 1 + pos, b.y, &bar, style);
