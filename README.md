@@ -15,7 +15,6 @@ Glances but with
 - much less resource usage
 
 It should work in fallback sysinfo mode on most platforms supported by sysinfo,
-crossterm, and ratatui.  As soon as #2 is completed, it will be at its best on
-Linux, since sysinfo takes a least-common-denominator approach; I intend to
-support it indefinitely as a fallback, but the primary development will directly
-use Linux procfs.
+crossterm, and ratatui.  It is at its best on Linux, since sysinfo takes a
+least-common-denominator approach; I intend to support it indefinitely as a
+fallback, but the primary development will directly use Linux procfs.
