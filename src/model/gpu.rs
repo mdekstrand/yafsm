@@ -9,4 +9,6 @@ pub struct GPUStats {
     pub mem_avail: u64,
     pub mem_used: u64,
     pub temp: Option<f32>,
+    /// Power usage in watts
+    pub power: Option<f32>,
 }

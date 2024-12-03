@@ -57,6 +57,11 @@ impl GPUs {
             let dev = nv.device_by_index(i)?;
             let util = dev.utilization_rates()?;
             let mem = dev.memory_info()?;
+            let power = match dev.power_usage() {
+                Ok(mw) => Some((mw as f32) * 0.001),
+                Err(NvmlError::NotSupported) => None,
+                Err(e) => return Err(e.into()),
+            };
             let temp = match dev.temperature(TemperatureSensor::Gpu) {
                 Ok(t) => Some(t as f32),
                 Err(NvmlError::NotSupported) => None,
@@ -70,6 +75,7 @@ impl GPUs {
                 mem_total: mem.total,
                 mem_used: mem.used,
                 temp,
+                power,
             })
         }
 

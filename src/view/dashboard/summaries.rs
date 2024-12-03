@@ -2,11 +2,14 @@
 
 use ratatui::style::{Color, Style, Stylize};
 
+use friendly::scalar;
+
 use crate::backend::BackendError;
 use crate::backend::BackendResult;
 use crate::model::cpu::ExtendedCPU;
 use crate::model::ExtendedMemory;
 use crate::model::MonitorData;
+use crate::view::util::fmt_si_val;
 use crate::view::widgets::infocols::{ICEntry, InfoCols};
 
 pub fn cpu_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
@@ -95,11 +98,14 @@ pub fn gpu_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
         Err(BackendError::NotAvailable)
     } else if gpus.len() == 1 {
         let gpu = &gpus[0];
-        Ok(InfoCols::new()
+        let mut ic = InfoCols::new()
             .add(ICEntry::new(gpu.name.clone()))
             .add_pct("gpu", gpu.gpu_util * 100.0)
-            .add_pct("mem", gpu.mem_util * 100.0)
-            .add_bytes("avail", gpu.mem_avail))
+            .add_pct("mem", gpu.mem_util * 100.0);
+        if let Some(pow) = gpu.power {
+            ic = ic.add_str("power", format!("{}W", fmt_si_val(pow)))
+        }
+        Ok(ic)
     } else {
         let n = gpus.len();
         let tot_gpu: f32 = gpus.iter().map(|g| g.gpu_util).sum();
@@ -114,8 +120,10 @@ pub fn gpu_summary(state: &dyn MonitorData) -> BackendResult<InfoCols> {
             ic = ic
                 .add(ICEntry::new(gpu.name.clone()))
                 .add_pct("gpu", gpu.gpu_util / 100.0)
-                .add_pct("mem", gpu.mem_util / 100.0)
-                .add_bytes("avail", gpu.mem_avail);
+                .add_pct("mem", gpu.mem_util / 100.0);
+            if let Some(pow) = gpu.power {
+                ic = ic.add_value("power", pow)
+            }
         }
         Ok(ic)
     }
