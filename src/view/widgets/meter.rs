@@ -47,49 +47,18 @@ impl Widget for Meter {
         buf.get_mut(b.x + b.width - 1, b.y).set_char(']');
 
         let avail_chars = b.width - 2;
-        let avail_ticks = avail_chars * 8;
-        let mut pre_w = 0;
         let mut pos = 0;
 
         for i in 0..self.values.len() {
             let ent = &self.values[i];
-            trace!(
-                "{}{}: {} (pre_w {})",
-                self.label.as_ref(),
-                i,
-                ent.value,
-                pre_w
-            );
-            let bw = (avail_ticks as f32 * ent.value).round() as u32;
-            trace!("{}{}: using {} of {} ticks", self.label, i, bw, avail_ticks);
-            if bw <= pre_w {
-                pre_w = 0;
-                continue;
+            trace!("{}{}: {}", self.label.as_ref(), i, ent.value,);
+            let bw = (avail_chars as f32 * ent.value).round() as usize;
+            if bw > 0 {
+                let bar = "|".repeat(bw);
+                let style = Style::new().fg(ent.color);
+                buf.set_string(b.x + 1 + pos, b.y, &bar, style);
+                pos += bar.chars().count() as u16;
             }
-
-            let blocks = (bw - pre_w) / 8;
-            let partial = (bw - pre_w) % 8;
-
-            let mut bar = "\u{2588}".repeat(blocks as usize);
-            if partial > 0 {
-                bar.push(char::from_u32(0x2588 + 8 - partial).expect("invalid block char"));
-                pre_w = 8 - partial;
-            } else {
-                pre_w = 0;
-            }
-
-            let mut style = Style::new().fg(ent.color);
-            if partial > 0 {
-                for j in (i + 1)..self.values.len() {
-                    if self.values[j].value * avail_ticks as f32 >= 1.0 {
-                        style = style.bg(self.values[j].color);
-                        break;
-                    }
-                }
-            }
-            trace!("{}{}: writing {} characters", self.label, i, bar.len());
-            buf.set_string(b.x + 1 + pos, b.y, &bar, style);
-            pos += bar.chars().count() as u16;
         }
     }
 }
