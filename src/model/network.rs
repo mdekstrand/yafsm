@@ -1,4 +1,5 @@
 /// Network statistics.
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct NetworkStats {
     pub name: String,

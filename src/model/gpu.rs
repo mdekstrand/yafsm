@@ -1,5 +1,6 @@
 //! GPU statistics
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct GPUStats {
     pub name: String,

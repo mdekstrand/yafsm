@@ -2,8 +2,6 @@
 
 use ratatui::style::{Color, Style, Stylize};
 
-use friendly::scalar;
-
 use crate::backend::BackendError;
 use crate::backend::BackendResult;
 use crate::model::cpu::ExtendedCPU;

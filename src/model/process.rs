@@ -28,6 +28,7 @@ pub enum ProcSortOrder {
     Time,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Process {
     pub pid: u32,
@@ -49,6 +50,7 @@ pub struct Process {
     pub io_write: Option<u64>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct ProcessCommandInfo {
     pub exe: String,

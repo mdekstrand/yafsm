@@ -9,6 +9,7 @@ pub struct LoadAvg {
 }
 
 /// Full pressure stall information.
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct SystemPressure {
     pub cpu_psi: Pressure,
@@ -19,6 +20,7 @@ pub struct SystemPressure {
 }
 
 /// Pressure stall record.
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct Pressure {
     pub avg10: f32,

@@ -17,7 +17,7 @@ pub mod source;
 pub mod state;
 pub mod swap;
 
-pub use cpu::{ExtendedCPU, CPU};
+pub use cpu::CPU;
 pub use disk::DiskIO;
 pub use fs::Filesystem;
 pub use gpu::GPUStats;
