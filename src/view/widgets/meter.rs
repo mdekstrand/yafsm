@@ -43,8 +43,8 @@ impl Widget for Meter {
         buf.set_string(l.x, l.y, self.label.as_ref(), Style::new().bold());
 
         let b = layout[1];
-        buf.get_mut(b.x, b.y).set_char('[');
-        buf.get_mut(b.x + b.width - 1, b.y).set_char(']');
+        buf[(b.x, b.y)].set_char('[');
+        buf[(b.x + b.width - 1, b.y)].set_char(']');
 
         let avail_chars = b.width - 2;
         let mut pos = 0;
