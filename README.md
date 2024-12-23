@@ -18,3 +18,5 @@ It should work in fallback sysinfo mode on most platforms supported by sysinfo,
 crossterm, and ratatui.  It is at its best on Linux, since sysinfo takes a
 least-common-denominator approach; I intend to support it indefinitely as a
 fallback, but the primary development will directly use Linux procfs.
+
+Press `h` when the application is running to see help.
