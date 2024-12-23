@@ -5,6 +5,7 @@ use super::{process::ProcessList, *};
 
 /// Container for system monitor state.
 pub struct MonitorState<'back> {
+    pub running: bool,
     pub options: Options,
     pub backend: &'back mut dyn MonitorBackend,
     /// Sort order for processes.  [None] to sort automatically.
@@ -18,6 +19,7 @@ impl<'back> MonitorState<'back> {
         backend: &'back mut dyn MonitorBackend,
     ) -> Result<MonitorState<'back>> {
         Ok(MonitorState {
+            running: true,
             options,
             backend,
             proc_sort: None,

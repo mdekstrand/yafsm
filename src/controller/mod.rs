@@ -1,6 +1,7 @@
 //! Events, states, and controller.
 use anyhow::Result;
-use crossterm::event::{poll, read, Event, KeyCode, KeyEventKind};
+use crossterm::event::{poll, read, Event, KeyEventKind};
+use log::*;
 use ratatui::{backend::Backend, Terminal};
 
 use crate::model::MonitorState;
@@ -8,6 +9,7 @@ use crate::view::render_screen;
 use clock::Clock;
 
 mod clock;
+mod commands;
 
 pub fn run_event_loop<'b, TB>(term: &mut Terminal<TB>, state: &mut MonitorState<'b>) -> Result<()>
 where
@@ -15,32 +17,18 @@ where
 {
     let mut clock = Clock::new();
     term.clear()?;
-    loop {
+    while state.running {
         term.draw(|frame| render_screen(frame, &state).expect("rendering failed"))?;
         clock.update_now();
         if poll(clock.next_wait())? {
             match read()? {
                 Event::Key(e) if e.kind == KeyEventKind::Press => {
-                    // keypress
-                    match e.code {
-                        KeyCode::Char('q') => return Ok(()),
-
-                        // key process sorting
-                        KeyCode::Char('a') => state.proc_sort = None,
-                        KeyCode::Char('c') => {
-                            state.proc_sort = Some(crate::model::ProcSortOrder::CPU)
+                    for (kc, desc, action) in commands::KEY_BINDINGS {
+                        if e.code == *kc {
+                            debug!("found command {}", desc);
+                            action(state);
+                            break;
                         }
-                        KeyCode::Char('m') => {
-                            state.proc_sort = Some(crate::model::ProcSortOrder::Memory)
-                        }
-                        KeyCode::Char('i') => {
-                            state.proc_sort = Some(crate::model::ProcSortOrder::IO)
-                        }
-                        KeyCode::Char('t') if state.backend.has_process_time() => {
-                            state.proc_sort = Some(crate::model::ProcSortOrder::Time)
-                        }
-
-                        _ => (),
                     }
                 }
                 _ => (), // covers resize too, no action needed
@@ -50,4 +38,6 @@ where
             state.refresh()?;
         }
     }
+
+    Ok(())
 }
