@@ -78,6 +78,7 @@ static KEY_BINDINGS: &[(KeyCode, &str, CommandAction<char>)] = &[
     (KeyCode::Null, "Application commands", kc_nop),
     (kc('q'), "quit", kc_quit),
     (kc('h'), "help", kc_help),
+    (kc('?'), "!help", kc_help),
     (KeyCode::Null, "Process list sorting", kc_nop),
     (kc('a'), "sort automatically", kc_sort_auto),
     (kc('c'), "sort by CPU", kc_sort_cpu),

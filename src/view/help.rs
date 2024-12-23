@@ -30,7 +30,9 @@ pub fn render_help<'b>(
                 }
                 lines.push(ListItem::new(desc.to_string()).style(Style::new().bold()));
             }
-            KeyCode::Char(c) => lines.push(ListItem::new(format!("{}   {}", c, desc))),
+            KeyCode::Char(c) if !desc.starts_with("!") => {
+                lines.push(ListItem::new(format!("{}   {}", c, desc)))
+            }
             _ => (),
         }
     }
