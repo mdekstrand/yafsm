@@ -1,15 +1,18 @@
 use anyhow::Result;
 use crossterm::event::KeyCode;
 
-use crate::{model::MonitorState, view::render_monitor_screen};
+use crate::view::render_dashboard;
+use crate::{model::MonitorState, view::render_help};
 
 use super::{DefaultStateController, StateController};
 
-pub struct HelpStateController {}
+pub struct HelpStateController {
+    bindings: Vec<(KeyCode, &'static str)>,
+}
 
 impl HelpStateController {
-    pub fn new() -> Box<HelpStateController> {
-        Box::new(HelpStateController {})
+    pub fn new(bindings: Vec<(KeyCode, &'static str)>) -> Box<HelpStateController> {
+        Box::new(HelpStateController { bindings })
     }
 }
 
@@ -19,7 +22,8 @@ impl StateController for HelpStateController {
         state: &mut MonitorState<'s>,
         frame: &mut ratatui::Frame<'_>,
     ) -> Result<()> {
-        render_monitor_screen(frame, &state)?;
+        render_dashboard(frame, &state)?;
+        render_help(frame, state, &self.bindings)?;
         Ok(())
     }
 

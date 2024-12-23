@@ -6,8 +6,9 @@ use ratatui::Frame;
 
 use crate::controller::commands::{dispatch_key, kc, kc_nop, CommandAction};
 use crate::model::MonitorState;
-use crate::view::render_monitor_screen;
+use crate::view::render_dashboard;
 
+use super::help::HelpStateController;
 use super::StateController;
 
 pub struct DefaultStateController {}
@@ -20,7 +21,7 @@ impl DefaultStateController {
 
 impl StateController for DefaultStateController {
     fn render<'s>(&self, state: &mut MonitorState<'s>, frame: &mut Frame<'_>) -> Result<()> {
-        render_monitor_screen(frame, &state)
+        render_dashboard(frame, &state)
     }
 
     fn handle_key<'s>(
@@ -31,6 +32,10 @@ impl StateController for DefaultStateController {
         let c = dispatch_key(code, KEY_BINDINGS, state);
         match c {
             'q' => None,
+            'h' => {
+                let bindings = KEY_BINDINGS.iter().map(|(c, d, _)| (*c, *d)).collect();
+                Some(HelpStateController::new(bindings))
+            }
             _ => Some(self),
         }
     }
