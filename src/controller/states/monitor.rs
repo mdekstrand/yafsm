@@ -6,9 +6,10 @@ use ratatui::Frame;
 
 use crate::controller::commands::{dispatch_key, kc, kc_nop, CommandAction};
 use crate::model::MonitorState;
-use crate::view::render_screen;
+use crate::view::render_monitor_screen;
 
 use super::StateController;
+
 pub struct DefaultStateController {}
 
 impl DefaultStateController {
@@ -19,7 +20,7 @@ impl DefaultStateController {
 
 impl StateController for DefaultStateController {
     fn render<'s>(&self, state: &mut MonitorState<'s>, frame: &mut Frame<'_>) -> Result<()> {
-        render_screen(frame, &state)
+        render_monitor_screen(frame, &state)
     }
 
     fn handle_key<'s>(

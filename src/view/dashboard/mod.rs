@@ -49,7 +49,7 @@ pub fn render_dashboard<'b>(frame: &mut Frame, state: &MonitorState<'b>) -> Resu
             Constraint::Min(0),
         ],
     )
-    .split(frame.size());
+    .split(frame.area());
     render_banner(frame, state, layout[0])?;
 
     let summaries = [

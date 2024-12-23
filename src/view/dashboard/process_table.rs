@@ -1,7 +1,7 @@
 use anyhow::Result;
+use layout::Flex;
 use log::*;
 use ratatui::{
-    layout::SegmentSize,
     prelude::*,
     widgets::{Cell, Paragraph, Row, Table},
 };
@@ -233,7 +233,7 @@ fn render_table<'b>(
     let table = Table::new(rows, &widths)
         .header(Row::new(header))
         .column_spacing(1)
-        .segment_size(SegmentSize::LastTakesRemainder)
+        .flex(Flex::Legacy)
         .highlight_symbol(">");
     frame.render_widget(table, area);
     Ok(())

@@ -62,17 +62,14 @@ impl<'a> TableGroup<'a> {
         self.widths.clear();
         self.tables.push(TGTable {
             header: TGEntry {
-                label: label.into(),
+                label: label.into().patch_style(Style::new().bold()),
                 values: cols.into_iter().map(|c| c.into()).collect(),
             },
             rows: Vec::new(),
         });
 
         let len = self.tables.len();
-        self.tables[len - 1]
-            .header
-            .label
-            .patch_style(Style::new().bold());
+
         &mut self.tables[len - 1]
     }
 
@@ -136,7 +133,7 @@ impl<'a> Widget for TableGroup<'a> {
             let rows: Vec<Row<'_>> = table.rows.into_iter().map(|r| r.to_row()).collect();
             let header = table.header.to_row();
             let table = Table::new(rows, widths).header(header);
-            table.render(area, buf);
+            Widget::render(table, area, buf);
         }
     }
 }

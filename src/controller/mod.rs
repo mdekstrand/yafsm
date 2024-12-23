@@ -1,7 +1,6 @@
 //! Events, states, and controller.
 use anyhow::Result;
 use crossterm::event::{poll, read, Event, KeyEventKind};
-use log::*;
 use ratatui::{backend::Backend, Terminal};
 use states::{DefaultStateController, StateController};
 
