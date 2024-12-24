@@ -4,6 +4,8 @@
 find it strikes an optimal balance between density and legibility, and it's my
 go-to monitor for watching utilization of my compute nodes etc.
 
+![Screenshot](screenshot.png)
+
 However, Glances is quite slow — it usually uses about 25% of a CPU core just to
 display the system monitor dashboard.
 
