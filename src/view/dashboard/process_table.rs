@@ -17,7 +17,7 @@ type ColPredicate = fn(&dyn MonitorData) -> bool;
 
 struct PTColumn {
     label: &'static str,
-    width: u16,
+    constraint: Constraint,
     align: Alignment,
     sort_key: Option<ProcSortOrder>,
     ex_func: ColProc,
@@ -28,7 +28,7 @@ impl PTColumn {
     const fn new(label: &'static str) -> PTColumn {
         PTColumn {
             label,
-            width: 0,
+            constraint: Constraint::Min(0),
             align: Alignment::Left,
             sort_key: None,
             ex_func: |_, _| Ok(String::new()),
@@ -37,7 +37,17 @@ impl PTColumn {
     }
 
     const fn width(self, width: u16) -> Self {
-        PTColumn { width, ..self }
+        PTColumn {
+            constraint: Constraint::Length(width),
+            ..self
+        }
+    }
+
+    const fn min_width(self, width: u16) -> Self {
+        PTColumn {
+            constraint: Constraint::Min(width),
+            ..self
+        }
     }
 
     const fn align(self, align: Alignment) -> Self {
@@ -69,7 +79,7 @@ impl PTColumn {
 
 static COLUMNS: &[PTColumn] = &[
     PTColumn::new("CPU%")
-        .width(4)
+        .min_width(5)
         .align(Alignment::Right)
         .sort(ProcSortOrder::CPU)
         .extract(|_, proc| Ok(format!("{:.1}", proc.cpu_util * 100.0))),
@@ -122,7 +132,7 @@ static COLUMNS: &[PTColumn] = &[
         .sort(ProcSortOrder::IO)
         .extract(|_, proc| Ok(proc.io_write.map(fmt_int_bytes).unwrap_or_default())),
     PTColumn::new("Command")
-        .width(0)
+        .min_width(20)
         .align(Alignment::Left)
         .extract(|state, proc| {
             let cmd = state.process_cmd_info(proc.pid);
@@ -202,22 +212,17 @@ fn render_table<'b>(
     area: Rect,
 ) -> Result<()> {
     debug!("proctbl: rendering {} processes in {:?}", procs.len(), area);
-    let mut rows = Vec::with_capacity(procs.len());
-    for proc in procs.iter() {
-        rows.push(process_row(state, proc)?);
-    }
-
-    let widths: Vec<_> = COLUMNS
+    let mut widths: Vec<_> = COLUMNS
         .iter()
         .filter(|c| c.enabled(state))
-        .map(|c| {
-            if c.width > 0 {
-                Constraint::Length(c.width)
-            } else {
-                Constraint::Min(20)
-            }
-        })
+        .map(|c| c.constraint)
         .collect();
+
+    let mut rows = Vec::with_capacity(procs.len());
+    for proc in procs.iter() {
+        rows.push(process_row(state, proc, &mut widths)?);
+    }
+
     let header: Vec<_> = COLUMNS
         .iter()
         .filter(|c| c.enabled(state))
@@ -239,14 +244,24 @@ fn render_table<'b>(
     Ok(())
 }
 
-fn process_row<'a, 'b>(state: &MonitorState<'b>, proc: &Process) -> Result<Row<'a>> {
+fn process_row<'a, 'b>(
+    state: &MonitorState<'b>,
+    proc: &Process,
+    widths: &mut [Constraint],
+) -> Result<Row<'a>> {
     let mut cells = Vec::with_capacity(COLUMNS.len());
-    for col in COLUMNS {
+    for (i, col) in COLUMNS.iter().enumerate() {
         if !col.enabled(state) {
             continue;
         }
 
         let text = (col.ex_func)(state, proc)?;
+        let len = text.len();
+        if let Constraint::Min(w) = widths[i] {
+            if len <= 20 && len > (w as usize) {
+                widths[i] = Constraint::Min(len as u16)
+            }
+        }
         let line = Line::from(text).alignment(col.align);
         cells.push(line);
     }
