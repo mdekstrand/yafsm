@@ -148,12 +148,14 @@ impl MonitorBackend for LinuxBackend {
         }
         Ok(Memory {
             used: if let Some(avail) = mem.mem_available {
-                mem.mem_total - avail - zfs_freeable
+                mem.mem_total
+                    .saturating_sub(avail)
+                    .saturating_sub(zfs_freeable)
             } else {
                 mem.active + mem.inactive
             },
             freeable: if let Some(avail) = mem.mem_available {
-                avail - mem.mem_free + zfs_freeable
+                avail.saturating_sub(mem.mem_free) + zfs_freeable
             } else {
                 mem.cached + mem.buffers
             },
