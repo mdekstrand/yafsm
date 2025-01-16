@@ -21,7 +21,7 @@ pub use cpu::CPU;
 pub use disk::DiskIO;
 pub use fs::Filesystem;
 pub use gpu::GPUStats;
-pub use load::{LoadAvg, Pressure, SystemPressure};
+pub use load::{LoadAvg, SystemPressure};
 pub use memory::{ExtendedMemory, Memory};
 pub use network::NetworkStats;
 pub use options::Options;
