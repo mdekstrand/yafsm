@@ -1,3 +1,5 @@
+use std::ffi::OsStr;
+
 use log::*;
 use nvml_wrapper::enum_wrappers::device::TemperatureSensor;
 use nvml_wrapper::error::NvmlError;
@@ -12,7 +14,10 @@ pub(super) struct GPUs {
 
 impl GPUs {
     pub(super) fn init() -> BackendResult<GPUs> {
-        let nvidia = match Nvml::init() {
+        let nvidia = match Nvml::builder()
+            .lib_path(OsStr::new("libnvidia-ml.so.1"))
+            .init()
+        {
             Ok(n) => Some(n),
             Err(NvmlError::LibloadingError(e)) => {
                 debug!("error loading NVML: {}", e);
