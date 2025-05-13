@@ -1,11 +1,12 @@
 //! Events, states, and controller.
 use anyhow::Result;
-use crossterm::event::{poll, read, Event, KeyEventKind};
+use crossterm::event::{poll, read, Event, KeyCode, KeyEventKind, KeyModifiers};
+use log::*;
 use ratatui::{backend::Backend, Terminal};
-use states::{DefaultStateController, StateController};
 
 use crate::model::MonitorState;
 use clock::Clock;
+use states::{DefaultStateController, StateController};
 
 mod clock;
 mod commands;
@@ -37,7 +38,14 @@ fn event_loop_iter<'b, TB: Backend>(
     if poll(clock.next_wait())? {
         match read()? {
             Event::Key(e) if e.kind == KeyEventKind::Press => {
-                return Ok(controller.handle_key(e.code, state));
+                debug!("key event {:?}", e);
+                if e.modifiers.contains(KeyModifiers::CONTROL) && e.code == KeyCode::Char('l') {
+                    debug!("^L received, redrawing");
+                    term.clear()?;
+                    return Ok(Some(controller));
+                } else {
+                    return Ok(controller.handle_key(e.code, state));
+                }
             }
             _ => (), // covers resize too, no action needed
         }

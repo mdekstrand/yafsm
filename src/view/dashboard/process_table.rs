@@ -250,7 +250,7 @@ fn process_row<'a, 'b>(
     widths: &mut [Constraint],
 ) -> Result<Row<'a>> {
     let mut cells = Vec::with_capacity(COLUMNS.len());
-    for (i, col) in COLUMNS.iter().enumerate() {
+    for (i, col) in COLUMNS.iter().filter(|c| c.enabled(state)).enumerate() {
         if !col.enabled(state) {
             continue;
         }
