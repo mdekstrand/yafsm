@@ -7,23 +7,23 @@ authors = ["Michael Ekstrand <md@ekstrandom.net>"]
 description = "System usage monitor inspired by glances."
 
 [dependencies]
-anyhow = "~1.0"
-thiserror = "~1.0"
-log = { version = "~0.4", features = ["release_max_level_debug"] }
-fern = "~0.6"
-clap = { version = "~4.4", features = ["derive"] }
+anyhow = "^1.0"
+thiserror = "^1.0"
+log = { version = "^0.4", features = ["release_max_level_debug"] }
+fern = "^0.6"
+clap = { version = "^4.4", features = ["derive"] }
 
-itertools = "~0.12"
-regex = "~1.10"
+itertools = "^0.12"
+regex = "^1.10"
 
-crossterm = "~0.28.1"
-ratatui = { version = "~0.29" }
+crossterm = "^0.28.1"
+ratatui = { version = "^0.29" }
 
-friendly = "~0.1"
-chrono = "~0.4"
+friendly = "^0.1"
+chrono = "^0.4"
 
-uzers = "~0.11"
-sysinfo = { version = "~0.29", default-features = false }
+uzers = "^0.11"
+sysinfo = { version = "^0.29", default-features = false }
 
 [target.'cfg(target_os="linux")'.dependencies]
 procfs = "^0.16"
