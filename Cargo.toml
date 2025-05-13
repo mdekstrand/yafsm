@@ -23,7 +23,7 @@ friendly = "^0.2"
 chrono = "^0.4"
 
 uzers = "^0.12"
-sysinfo = { version = "^0.35", default-features = false }
+sysinfo = { version = "^0.35" }
 
 [target.'cfg(target_os="linux")'.dependencies]
 procfs = "^0.17"

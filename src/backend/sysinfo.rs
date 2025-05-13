@@ -5,8 +5,8 @@ use std::time::Duration;
 use itertools::Itertools;
 use log::*;
 use sysinfo::{
-    CpuExt, CpuRefreshKind, DiskExt, NetworkExt, PidExt, ProcessExt, ProcessRefreshKind,
-    RefreshKind, System, SystemExt,
+    CpuRefreshKind, Disks, MemoryRefreshKind, Networks, Pid, ProcessRefreshKind, RefreshKind,
+    System,
 };
 
 use crate::model::*;
@@ -16,6 +16,8 @@ use super::{error::generic_err, util::RefreshRecord, BackendResult, MonitorBacke
 /// Backend using [sysinfo].
 pub struct SysInfoBackend {
     system: System,
+    disks: Disks,
+    networks: Networks,
     clock: RefreshRecord,
 }
 
@@ -23,9 +25,15 @@ impl SysInfoBackend {
     /// Create a new backend.
     pub fn create() -> BackendResult<SysInfoBackend> {
         let mut system = System::new();
+        let mut disks = Disks::new();
+        let mut networks = Networks::new();
         system.refresh_specifics(RefreshKind::everything());
+        disks.refresh(true);
+        networks.refresh(true);
         Ok(SysInfoBackend {
             system,
+            disks,
+            networks,
             clock: RefreshRecord::new(),
         })
     }
@@ -34,43 +42,35 @@ impl SysInfoBackend {
 impl MonitorBackend for SysInfoBackend {
     fn update(&mut self, _opts: &Options) -> BackendResult<()> {
         debug!("refreshing system");
-        let specs = RefreshKind::new()
+        let specs = RefreshKind::nothing()
             .with_cpu(CpuRefreshKind::everything())
-            .with_memory()
-            .with_processes(ProcessRefreshKind::everything())
-            .with_networks()
-            .with_disks_list()
-            .with_disks();
+            .with_memory(MemoryRefreshKind::everything())
+            .with_processes(ProcessRefreshKind::everything());
         self.system.refresh_specifics(specs);
+        self.disks.refresh(true);
+        self.networks.refresh(true);
         self.clock.update();
         Ok(())
     }
 
     fn hostname(&self) -> BackendResult<String> {
-        self.system.host_name().ok_or(generic_err("no host name"))
+        System::host_name().ok_or(generic_err("no host name"))
     }
 
     fn system_version(&self) -> BackendResult<String> {
-        let os = self.system.distribution_id();
-        let osv = self
-            .system
-            .os_version()
-            .ok_or(generic_err("no system version"))?;
-        let k = self.system.name().ok_or(generic_err("no system name"))?;
-        let kv = self
-            .system
-            .kernel_version()
-            .ok_or(generic_err("no kernel version"))?;
+        let os = System::distribution_id();
+        let osv = System::os_version().ok_or(generic_err("no system version"))?;
+        let k = System::name().ok_or(generic_err("no system name"))?;
+        let kv = System::kernel_version().ok_or(generic_err("no kernel version"))?;
         Ok(format!("{} {} with {} {}", os, osv, k, kv))
     }
 
     fn uptime(&self) -> BackendResult<Duration> {
-        Ok(Duration::from_secs(self.system.uptime()))
+        Ok(Duration::from_secs(System::uptime()))
     }
 
     fn cpu_count(&self) -> BackendResult<u32> {
-        self.system
-            .physical_core_count()
+        System::physical_core_count()
             .map(|s| s as u32)
             .ok_or(generic_err("CPU count unavailable"))
     }
@@ -81,7 +81,7 @@ impl MonitorBackend for SysInfoBackend {
 
     fn global_cpu(&self) -> BackendResult<CPU> {
         Ok(CPU {
-            utilization: self.system.global_cpu_info().cpu_usage() / 100.0,
+            utilization: self.system.global_cpu_usage() / 100.0,
             extended: cpu::ExtendedCPU::None,
         })
     }
@@ -109,7 +109,7 @@ impl MonitorBackend for SysInfoBackend {
     }
 
     fn load_avg(&self) -> BackendResult<LoadAvg> {
-        let la = self.system.load_average();
+        let la = System::load_average();
         Ok(LoadAvg {
             one: la.one as f32,
             five: la.five as f32,
@@ -125,7 +125,7 @@ impl MonitorBackend for SysInfoBackend {
             out.push(Process {
                 pid: proc.pid().as_u32(),
                 ppid: proc.parent().map(|p| p.as_u32()),
-                name: proc.name().into(),
+                name: proc.name().to_string_lossy().to_string(),
                 uid: proc.user_id().map(|u| **u),
                 status: match proc.status() {
                     sysinfo::ProcessStatus::Idle => 'I',
@@ -158,17 +158,24 @@ impl MonitorBackend for SysInfoBackend {
 
     fn process_cmd_info(&self, pid: u32) -> BackendResult<ProcessCommandInfo> {
         let procs = self.system.processes();
-        let pid = PidExt::from_u32(pid);
+        let pid = Pid::from_u32(pid);
         let proc = procs.get(&pid).ok_or(generic_err("missing process"))?;
         Ok(ProcessCommandInfo {
-            exe: proc.exe().to_string_lossy().into(),
-            cmdline: proc.cmd().into(),
+            exe: proc
+                .exe()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_else(|| "unknown".into()),
+            cmdline: proc
+                .cmd()
+                .iter()
+                .map(|s| s.to_string_lossy().to_string())
+                .collect(),
         })
     }
 
     fn networks(&self) -> BackendResult<Vec<NetworkStats>> {
-        let nets = self.system.networks();
-        Ok(nets
+        Ok(self
+            .networks
             .into_iter()
             .map(|(name, stats)| NetworkStats {
                 name: name.clone(),
@@ -181,8 +188,8 @@ impl MonitorBackend for SysInfoBackend {
     }
 
     fn filesystems(&self) -> BackendResult<Vec<Filesystem>> {
-        let disks = self.system.disks();
-        Ok(disks
+        Ok(self
+            .disks
             .into_iter()
             .map(|d| Filesystem {
                 name: d.name().to_string_lossy().into(),
