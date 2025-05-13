@@ -42,6 +42,7 @@ fn event_loop_iter<'b, TB: Backend>(
                 if e.modifiers.contains(KeyModifiers::CONTROL) && e.code == KeyCode::Char('l') {
                     debug!("^L received, redrawing");
                     term.clear()?;
+                    state.refresh()?;
                     return Ok(Some(controller));
                 } else {
                     return Ok(controller.handle_key(e.code, state));
