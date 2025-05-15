@@ -97,7 +97,7 @@ static COLUMNS: &[PTColumn] = &[
         .align(Alignment::Right)
         .extract(|_, proc| Ok(fmt_bytes(proc.mem_rss))),
     PTColumn::new("PID")
-        .width(6)
+        .width(7)
         .align(Alignment::Right)
         .extract(|_, proc| Ok(format!("{}", proc.pid))),
     PTColumn::new("USER")
