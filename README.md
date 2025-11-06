@@ -26,10 +26,12 @@ Glances but with
 
 ## Platforms
 
-It should work in fallback sysinfo mode on most platforms supported by sysinfo,
-crossterm, and ratatui.  It is at its best on Linux, since sysinfo takes a
-least-common-denominator approach; I intend to support it indefinitely as a
-fallback, but the primary development will directly use Linux procfs.
+`yafsm` is at its best on Linux, supporting a wide range of system statistics as
+well as NVidia GPU performance.
+
+On other platforms, `yafsm` can use the [`sysinfo`](https://docs.rs/sysinfo)
+crate.  This mode has far fewer features.  I have no plans to remove it, but
+primary development focuses on Linux features.
 
 ## User Interface
 
